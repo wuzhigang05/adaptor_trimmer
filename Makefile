@@ -28,9 +28,9 @@ VERSION = $(shell cat VERSION)
 Adaptor_trimmer: Fasta_reader.h seq.h $(ALL_FILES)
 	$(CXX) $(CXXFLAGS) $(LINKS) Adaptor_trimmer.cc -o $@
 Guess_fastq_format: tools.h $(ALL_FILES)
-	@$(CXX) $(CXXFLAGS) $(LINKS) Guess_fastq_format.cc -o $@
+	$(CXX) $(CXXFLAGS) $(LINKS) Guess_fastq_format.cc -o $@
 Quality_trimmer: tools.h $(ALL_FILES) 
-	@$(CXX) $(CXXFLAGS) $(LINKS) Quality_trimmer.cc -o $@
+	$(CXX) $(CXXFLAGS) $(LINKS) Quality_trimmer.cc -o $@
 
 Adaptor_trimmer.tgz: $(SRC_PKG_LIST)
 	rm -rf Adaptor_trimmer.tgz
