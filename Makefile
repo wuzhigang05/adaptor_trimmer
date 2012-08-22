@@ -14,7 +14,8 @@ CXXFLAGS = -O3 $(INC)
 FIND :=$(shell which find)
 
 LINKS = $(shell $(FIND) libs -type f)
-GENERAL_LIST = $(shell $(FIND) data) Makefile LICENSE VERSION AUTHORS README.rst \
+GENERAL_LIST = $(shell $(FIND) data) 
+			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst \
 			   $(shell $(FIND) . -name "*.sh")
 SRC_PKG_LIST = $(wildcard *.h) \
                $(wildcard *.cc) \
