@@ -10,3 +10,4 @@ cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/stre
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/file* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/modifier* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/system* SeqAn1.3/seqan/
+cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/store* SeqAn1.3/seqan/
