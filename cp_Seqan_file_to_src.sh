@@ -13,3 +13,4 @@ cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/syst
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/store* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/align* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/refinement* SeqAn1.3/seqan/
+cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/score* SeqAn1.3/seqan/
