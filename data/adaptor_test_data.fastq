@@ -1,0 +1,40 @@
+@F51PMFM04JOZ2N  | missing two G at the position pointed by pipe here deletion in query
+tcagatcttctaTGGAGCAAGTCTGGTGGATGGGATGGCTTAACCATAACTATGCCGactgagactgccaaggcacacaggggataggnn
++
+IIIIIICBBGFIIIGG?><<=AA@88:<<<<//.7<?7733/////7447><>AAGIIHIIIIIIIIIIEDAADDDA<2////7<:<<!!
+@F51PMFM04JOZ2N  | missing one G at the position pointed by pipe here deletion in query
+tcagatcttctaTGGAGGCAAGTCTGGTGGATGGGATGGCTTAACCATAACTATGCCGactgagactgccaaggcacacaggggataggnn
++
+IIIIIICBBGFIIIGGG?><<=AA@88:<<<<//.7<?7733/////7447><>AAGIIHIIIIIIIIIIEDAADDDA<2////7<:<<!!
+@F51PMFM04JOZ2N  | one more G at the position pointed by pipe here insertion in query
+tcagatcttctaTGGAGGGGCAAGTCTGGTGGATGGGATGGCTTAACCATAACTATGCCGactgagactgccaaggcacacaggggataggnn
++
+IIIIIICBBGFIIIGGGGG?><<=AA@88:<<<<//.7<?7733/////7447><>AAGIIHIIIIIIIIIIEDAADDDA<2////7<:<<!!
+@F51PMFM04JOZ2N  | two more G at the position pointed by pipe here insertion in query
+tcagatcttctaTGGAGGGGGCAAGTCTGGTGGATGGGATGGCTTAACCATAACTATGCCGactgagactgccaaggcacacaggggataggnn
++
+IIIIIICBBGFIIIGGGGGG?><<=AA@88:<<<<//.7<?7733/////7447><>AAGIIHIIIIIIIIIIEDAADDDA<2////7<:<<!!
+@F51PMFM04JVU4C correct sequence
+tcagatcttctaTGGAGGGCAAGTCTGGTGCCATCTCGTCCTTAACCATAACTatgccgactgagactgccaaggcacacaggggagtagagn
++
+FFFFFFF@@@FFDDAA1114449444>=?<======BBA@>88888830..46667999:84444<A>>=;9999<7///2,,,,5/7---2!
+@F51PMFM04JVU4C  | replace two consectutive G with T below
+tcagatcttctaTGGAGTTCAAGTCTGGTGCCATCTCGTCCTTAACCATAACTatgccgactgagactgccaaggcacacaggggagtagagn
++
+FFFFFFF@@@FFDDAA1114449444>=?<======BBA@>88888830..46667999:84444<A>>=;9999<7///2,,,,5/7---2!
+@F5DG43U02C6IHQ without adaptor
+tcaggccaatgactGAGTTTGATCGTGGCTCAGCAGCAGCCGCCGTaaaacctgagactgccaaggcacacagggggagtaggngn
++
+IIIIIIIIIIIIIIIIIHHHIIDDDGGGGGIIIIIIIIHGGCAA;4111/33?A><DE@A666443<>??::-----8-<:33!3!
+@1 case perfect match
+atcgIAMASINGLEADAPTORaaaaaaaaaaccccccccccatcgIAMARIGHTADAPTORaaaaaaaaaacccccccccc
++
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+@1 case one insertion in left side and two inserts in right side of query sequence 
+atcgIAMASINGaLEADAPTORaaaaaaaaaaccccccccccatcgIAMARIGaaHTADAPTORaaaaaaaaaacccccccccc
++
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+@1 case two insertions in left and three inerstions in right side of query sequence 
+atcgIAMASINGaaLEADAPTORaaaaaaaaaaccccccccccatcgIAMASINGaaaLEADAPTORaaaaaaaaaacccccccccc
++
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
