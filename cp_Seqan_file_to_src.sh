@@ -7,3 +7,4 @@ cp ~/software/Cplusplus_libs/seqan-trunk/README SeqAn1.3
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/platform* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/misc* SeqAn1.3/seqan/
 cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/stream* SeqAn1.3/seqan/
+cp -r /Users/kaitang/software/Cplusplus_libs/seqan-trunk/core/include/seqan/file* SeqAn1.3/seqan/
