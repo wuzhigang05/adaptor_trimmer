@@ -51,11 +51,11 @@ Enumerated lists:
 
 1. test Adaptor_trimmer fixed primer mode
 
-  1. take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
+  a) take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
      and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
      write sequences with adaptor found to with_5_adaptor and sequences with no adaptor found 
      to no_5_adaptor, both of which will be write to STDOUT by default. $ cat data/adaptor_test_data.fastq data/adaptor_test_data.fastq | Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
-  2. same as above but take input from arbitrary number of files using default editing distance, 
+  b) same as above but take input from arbitrary number of files using default editing distance, 
      which is 20% of respective adaptor length. This is the parameter most of user should use. 
      Don't worry about we are setting the eidt distance too high, if there are several alignments 
      between adaptor and sequence meeting the requirement, program will always report the best 
@@ -64,8 +64,8 @@ Enumerated lists:
 
 2. test Adaptor_trimmer IUPAC mode
 
-  1. cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON. $ cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
-  2. Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
+  a) cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON. $ cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
+  b) Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
      [] to denote alternative nucleotides. $  cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATC[ACGT]TGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
 
 3. Performance test: comparison of dynamic programming mode and regular expression mode
