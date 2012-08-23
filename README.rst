@@ -36,6 +36,17 @@ Main feature
 
 Example Usage
 ==============
+Enumerated lists:
+3. This is the first item 
+4. This is the second item 
+5. Enumerators are arabic numbers, 
+   single letters, or roman numerals 
+6. List items should be sequentially 
+   numbered, but need not start at 1 
+   (although not all formatters will 
+   honour the first index). 
+#. This item is auto-enumerated
+
 1. test Adaptor_trimmer fixed primer mode
   1. take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
      and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
@@ -47,6 +58,7 @@ Example Usage
      between adaptor and sequence meeting the requirement, program will always report the best 
      alignment, which means if there is exact match. The program will only report the exact 
      match position. $ Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq
+
 2. test Adaptor_trimmer IUPAC mode
   1. cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON. $ cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
   2. Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
