@@ -61,3 +61,4 @@ clean:
 	rm -rf Adaptor_trimmer.tgz
 	rm -rf *.swp
 	rm -rf $(targets)
+	rm -rf bin
