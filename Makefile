@@ -31,12 +31,12 @@ ALL_FILES_SEQAN = $(shell $(FIND) SeqAn1.3 -name "*.h")
 ALL_FILES_BOOST = $(shell $(FIND) Boost1.50 -name "*.hpp")
 ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
-Adaptor_trimmer: Fasta_reader.h seq.h $(ALL_FILES)
-	$(CXX) $(CXXFLAGS) $(LINKS) Adaptor_trimmer.cc -o $@
-Guess_fastq_format: tools.h $(ALL_FILES)
-	$(CXX) $(CXXFLAGS) $(LINKS) Guess_fastq_format.cc -o $@
-Quality_trimmer: tools.h $(ALL_FILES) 
-	$(CXX) $(CXXFLAGS) $(LINKS) Quality_trimmer.cc -o $@
+Adaptor_trimmer: Adaptor_trimmer.cc Fasta_reader.h seq.h $(ALL_FILES) 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+Guess_fastq_format: Guess_fastq_format.cc tools.h $(ALL_FILES)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+Quality_trimmer: Quality_trimmer.cc tools.h $(ALL_FILES) 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
 
 Adaptor_trimmer.tgz: $(SRC_PKG_LIST)
 	rm -rf Adaptor_trimmer.tgz
