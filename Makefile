@@ -32,14 +32,20 @@ ALL_FILES_BOOST = $(shell $(FIND) Boost1.50 -name "*.hpp")
 ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
 Adaptor_trimmer: Adaptor_trimmer.cc Fasta_reader.h seq.h $(ALL_FILES) 
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	@echo compiling: $@
+	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	@echo compiling: $@ done
 	mkdir bin
 	mv $@ bin
 Guess_fastq_format: Guess_fastq_format.cc tools.h $(ALL_FILES)
+	@echo compiling: $@
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	@echo compiling: $@ done
 	mv $@ bin
 Quality_trimmer: Quality_trimmer.cc tools.h $(ALL_FILES) 
+	@echo compiling: $@
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
+	@echo compiling: $@ done
 	mv $@ bin
 
 Adaptor_trimmer.tgz: $(SRC_PKG_LIST)
