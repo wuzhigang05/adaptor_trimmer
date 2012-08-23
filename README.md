@@ -40,17 +40,21 @@ Example Usage
 --------
 
 * take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
-     and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
-     write sequences with adaptor found to with_5_adaptor and sequences with no adaptor found 
-     to no_5_adaptor, both of which will be write to STDOUT by default:
+  and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
+  write sequences with adaptor found to with_5_adaptor and sequences with no adaptor found 
+  to no_5_adaptor, both of which will be write to STDOUT by default.
 
-        cat data/adaptor_test_data.fastq data/adaptor_test_data.fastq | Adaptor_trimmer -I -o 
-     with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
+        cat data/adaptor_test_data.fastq data/adaptor_test_data.fastq | Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
 
-* Convert ILLUMINA 1.3+ FASTQ to FASTA and mask bases with quality lower than 20 to lowercases (the 1st command line) or to `N` (the 2nd):
+* same as above but take input from arbitrary number of files using default editing distance, 
+  which is 20% of respective adaptor length. This is the parameter most of user should use. 
+  Don't worry about we are setting the eidt distance too high, if there are several alignments 
+  between adaptor and sequence meeting the requirement, program will always report the best 
+  alignment, which means if there is exact match. The program will only report the exact 
+  match position.
 
-        seqtk seq -aQ64 -q20 in.fq > out.fa
-        seqtk seq -aQ64 -q20 -n N in.fq > out.fa
+        Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
+-3 IAMARiGHTADAPTOR -f fastq
 
 * Fold long FASTA/Q lines and remove FASTA/Q comments:
 
