@@ -58,7 +58,7 @@ Example Usage
         Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
 -3 IAMARiGHTADAPTOR -f fastq
 
-*Fold long FASTA/Q lines and remove FASTA/Q comments:**
+** Fold long FASTA/Q lines and remove FASTA/Q comments: **
 
   * a
   * b
