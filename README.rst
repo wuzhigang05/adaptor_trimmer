@@ -50,6 +50,7 @@ Enumerated lists:
 #. This item is auto-enumerated
 
 1. test Adaptor_trimmer fixed primer mode
+
   1. take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
      and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
      write sequences with adaptor found to with_5_adaptor and sequences with no adaptor found 
@@ -62,15 +63,20 @@ Enumerated lists:
      match position. $ Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq
 
 2. test Adaptor_trimmer IUPAC mode
+
   1. cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON. $ cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
   2. Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
      [] to denote alternative nucleotides. $  cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATC[ACGT]TGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
+
 3. Performance test: comparison of dynamic programming mode and regular expression mode
+
   1. IUPAC mode, which internally using regular expression $ time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -U
     real 0m0.723s
   2. dynamic programming mode $ time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -l 0
     real 0m6.700s
   CONCLUSION: if you just wanna using the exact match, then I recommend you using the IUPAC mode because it's 10 times faster than the dynamic program way.
+
 4. test Adaptor_trimmer using leading and tailing bases mode:
+
   1. read input from file $ Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
   2. read input from STDIN (pipe) $ cat data/adaptor_test_data.fastq | Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
