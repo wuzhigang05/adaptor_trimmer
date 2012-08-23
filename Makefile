@@ -12,8 +12,13 @@ NOASSERT_FLAGS = -DNDEBUG
 CXXFLAGS = -O3 $(INC)
 
 FIND :=$(shell which find)
+# default link with mac libraries
+LINKS = $(shell $(FIND) libs/mac -type f)
 
-LINKS = $(shell $(FIND) libs -type f)
+ifneq (,$(findstring Linux,$(shell uname)))
+LINKS = $(shell $(FIND) libs/linux -type f)
+endif
+
 GENERAL_LIST = $(shell $(FIND) data) \
 			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst \
 			   copy_seqan_dependence.py \
