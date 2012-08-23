@@ -1,4 +1,4 @@
-Introduction
+**Introduction**
 ============
 
 Adaptor trimming is an essential task before doing any serious analysis. 
@@ -27,7 +27,7 @@ customizing the tool to tail their need by making the options available. For exa
 It supports both fasta and fastq formats and you can use Adaptor_trimmer as a UNIX command 
 tool by piping. Most importantly, adaptor_trimmer is fast and competes most avaible tools.
 
-Main feature
+**Main feature**
 ============
 
   1. allowing mismatch and indel;
@@ -36,7 +36,7 @@ Main feature
   4. support cut leading and tailing bases
   5. support simple regular expression adaptor trimming
 
-Example Usage
+**Example usage**
 =============
 
 ** Test Adaptor_trimmer fixed primer mode. **
