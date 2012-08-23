@@ -18,31 +18,33 @@ LINKS = $(shell $(FIND) libs/mac -type f)
 ifneq (,$(findstring Linux,$(shell uname)))
 LINKS = $(shell $(FIND) libs/linux -type f)
 endif
+SRC_DIR = src
 
 GENERAL_LIST = $(shell $(FIND) data) \
 			   $(shell $(FIND) libs) \
 			   $(shell $(FIND) scripts) \
-			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst 
-SRC_PKG_LIST = $(wildcard *.h) \
-               $(wildcard *.cc) \
+			   $(wildcard *.md) \
+			   $(wildcard *.rst) \
+			   Makefile LICENSE VERSION AUTHORS 
+SRC_PKG_LIST = $(shell $(FIND) src) \
                $(shell $(FIND) SeqAn1.3 Boost1.50) \
                $(GENERAL_LIST)
 ALL_FILES_SEQAN = $(shell $(FIND) SeqAn1.3 -name "*.h")
 ALL_FILES_BOOST = $(shell $(FIND) Boost1.50 -name "*.hpp")
 ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
-Adaptor_trimmer: Adaptor_trimmer.cc Fasta_reader.h seq.h $(ALL_FILES) 
+Adaptor_trimmer: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_DIR)/seq.h $(ALL_FILES) 
 	@echo compiling: $@
 	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
 	@echo compiling: $@ done
 	mkdir bin
 	mv $@ bin
-Guess_fastq_format: Guess_fastq_format.cc tools.h $(ALL_FILES)
+Guess_fastq_format: $(SRC_DIR)/Guess_fastq_format.cc $(SRC_DIR)/tools.h $(ALL_FILES)
 	@echo compiling: $@
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
 	@echo compiling: $@ done
 	mv $@ bin
-Quality_trimmer: Quality_trimmer.cc tools.h $(ALL_FILES) 
+Quality_trimmer: $(SRC_DIR)/Quality_trimmer.cc $(SRC_DIR)/tools.h $(ALL_FILES) 
 	@echo compiling: $@
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
 	@echo compiling: $@ done
@@ -51,7 +53,6 @@ Quality_trimmer: Quality_trimmer.cc tools.h $(ALL_FILES)
 Adaptor_trimmer.tgz: $(SRC_PKG_LIST)
 	rm -rf Adaptor_trimmer.tgz
 	rm -rf Adaptor_trimmer-*
-	chmod a+x *.sh
 	rm -rf tmp
 	mkdir tmp
 	mkdir tmp/Adaptor_trimmer-$(VERSION)
