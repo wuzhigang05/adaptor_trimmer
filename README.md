@@ -39,7 +39,7 @@ Main feature
 Example Usage
 --------
 
-**Test Adaptor_trimmer fixed primer mode.*
+**Test Adaptor_trimmer fixed primer mode.**
 
   * take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
     and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
