@@ -1,5 +1,5 @@
 Introduction
-------------
+============
 
 Adaptor trimming is an essential task before doing any serious analysis. 
 Most of current available adaptor trimming tools, which do not allow mismatches and indels. 
@@ -39,7 +39,7 @@ Main feature
 Example Usage
 =============
 
-**Test Adaptor_trimmer fixed primer mode.**
+** Test Adaptor_trimmer fixed primer mode. **
 
   * take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
     and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
@@ -58,42 +58,29 @@ Example Usage
         Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
 -3 IAMARiGHTADAPTOR -f fastq
 
-** Fold long FASTA/Q lines and remove FASTA/Q comments: **
+** test Adaptor_trimmer IUPAC mode. **
 
-  * a
-  * b
+  * cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON.
+        cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
+ 
+  * Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
+    [] to denote alternative nucleotides. 
+        cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATC[ACGT]TGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
+ 
+** Performance test: comparison of dynamic programming mode and regular expression mode. **
+  * IUPAC mode, which internally using regular expression 
+        time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -U
+        real 0m0.723s
+  * dynamic programming mode 
+        time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -l 0
+        real 0m6.700s
+  * CONCLUSION: if you just wanna using the exact match, then I recommend you using the IUPAC mode because it's 10 times 
+    faster than the dynamic program way.
 
-        seqtk seq -Cl60 in.fa > out.fa
+** test Adaptor_trimmer using leading and tailing bases mode. **
 
-* Convert multi-line FASTQ to 4-line FASTQ:
+  * read input from file 
+        Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
+  * read input from STDIN (pipe) 
+        cat data/adaptor_test_data.fastq | Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
 
-        seqtk seq -l0 in.fq > out.fq
-
-* Reverse complement FASTA/Q:
-
-        seqtk seq -r in.fq > out.fq
-
-* Extract sequences with names in file `name.lst`, one sequence name per line:
-
-        seqtk subseq in.fq name.lst > out.fq
-
-* Extract sequences in regions contained in file `reg.bed`:
-
-        seqtk subseq in.fa reg.bed > out.fa
-
-* Mask regions in `reg.bed` to lowercases:
-
-        seqtk seq -M reg.bed in.fa > out.fa
-
-* Subsample 10000 read pairs from two large paired FASTQ files (remember to use the same random seed to keep pairing):
-
-        seqtk sample -s100 read1.fq 10000 > sub1.fq
-        seqtk sample -s100 read2.fq 10000 > sub2.fq
-
-* Trim low-quality bases from both ends using the Phred algorithm:
-
-        seqtk trimfq in.fq > out.fq
-
-* Trim 5bp from the left end of each read and 10bp from the right end:
-
-        seqtk trimfq -b 5 -e 10 in.fa > out.fa
