@@ -138,10 +138,11 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
 
 **Other possible usage cases**
 
- * demultiplexing
+ * Demultiplexing
+
   One can use Adaptor_trimmer to demultiplexing. Below is an example usage:
 
-    for i in ATCTGACTGG ATCTAGCTGC ....; do ./Adaptor_trimmer -i multiplexed1.fastq multiplexed2.fastq -5 $i -o $i.fastq -l 1 -n no_barcode_found.fastq -f fastq; done
+      for i in ATCTGACTGG ATCTAGCTGC ....; do ./Adaptor_trimmer -i multiplexed1.fastq multiplexed2.fastq -5 $i -o $i.fastq -l 1 -n no_barcode_found.fastq -f fastq; done
   
   Code explanation: You can specify barcode as many as you would in the ecllipse position. Above I set the edit distance to be 1. 
   You can set your own according to your situation. By the way, all the example showing above regarding Adaptor_trimmer are 
