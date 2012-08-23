@@ -28,7 +28,7 @@ It supports both fasta and fastq formats and you can use Adaptor_trimmer as a UN
 tool by piping. Most importantly, adaptor_trimmer is fast and competes most avaible tools.
 
 **Main feature**
-============
+------------
 
   1. allowing mismatch and indel;
   2. support IUPAC adaptor trimming;
@@ -37,7 +37,7 @@ tool by piping. Most importantly, adaptor_trimmer is fast and competes most avai
   5. support simple regular expression adaptor trimming
 
 **Example usage**
-=============
+-------------
 
 ** Test Adaptor_trimmer fixed primer mode. **
 
