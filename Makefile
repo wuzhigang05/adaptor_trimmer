@@ -20,6 +20,7 @@ LINKS = $(shell $(FIND) libs/linux -type f)
 endif
 
 GENERAL_LIST = $(shell $(FIND) data) \
+			   $(shell $(FIND) libs) \
 			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst \
 			   copy_seqan_dependence.py \
 			   $(shell $(FIND) . -name "*.sh")

@@ -1,0 +1,17 @@
+Adaptor_trimmer Authors
+primary contact: 
+Zhigang Wu <zhigang.wu@email.ucr.edu>
+
+Zhigang Wu wrote Adaptor_trimmer.  The SeqAn1.3 and Boost 1.50 release 
+libraries are used in Adaptor_trimmer and some of its sources are 
+included in Adaptor_trimmer source releases. Authors of Seqan are 
+Andreas Doring, David Weese, Tobias Rausch, and Knut Reinert. 
+Boost 1.50 have many contributors (see their respective web sites).
+
+Websites:
+
+  SeqAn:      http://www.trac.seqan.de
+  Boost:      http://boost.org
+
+Aug 2012
+
