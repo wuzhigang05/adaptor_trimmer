@@ -61,26 +61,38 @@ Example Usage
 ** test Adaptor_trimmer IUPAC mode. **
 
   * cut the 5' adaptor with case-insensitive (-I) and IUPAC (-U) mode ON.
+    
         cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATCNTGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
  
   * Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
     [] to denote alternative nucleotides. 
+        
         cat data/BS1.fastq | Adaptor_trimmer  -I -5 GAGTTTGATC[ACGT]TGGCTCAG  -o with_5_adaptor -n no_5_adaptor -U -f fastq
  
 ** Performance test: comparison of dynamic programming mode and regular expression mode. **
+
   * IUPAC mode, which internally using regular expression 
+        
         time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -U
+        
         real 0m0.723s
+
   * dynamic programming mode 
+        
         time Adaptor_trimmer data/FS11.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -l 0
+        
         real 0m6.700s
+
   * CONCLUSION: if you just wanna using the exact match, then I recommend you using the IUPAC mode because it's 10 times 
     faster than the dynamic program way.
 
 ** test Adaptor_trimmer using leading and tailing bases mode. **
 
   * read input from file 
+        
         Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
+
   * read input from STDIN (pipe) 
+        
         cat data/adaptor_test_data.fastq | Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
 
