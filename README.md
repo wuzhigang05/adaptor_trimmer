@@ -106,6 +106,7 @@ After using Adaptor_trimmer, we already get our clean sequence free of adaptor(s
 analysis, we want to extract the high quality region from these sequences. To fit this need, we provide two accompanying 
 tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trimmer. **
 
+
 **Guess_fastq_format**
 
   Guess_fastq_format as its indicates is able to tell the format of fastq in terms of fastq-sanger, fastq-solex, 
@@ -114,6 +115,7 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
   Below is a typical usage of Guess_fastq_format:
     
     Guess_fastq_format data/FS2.fastq 
+
 
 **Quality_trimmer**
   
@@ -134,3 +136,13 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
 
     cat data/AS10.fastq | ./Adaptor_trimmer  -I -5 GYGCASCAGKCGMGAAW  -n no_5_adaptor -U -f fastq |  ./Quality_trimmer -f "fastq-sanger" -c 20 -l 100  -s seqs_lessthan20.fastq >seqs_nolessthan20.fastq
 
+**Other possible usage cases**
+
+ * demultiplexing
+  One can use Adaptor_trimmer to demultiplexing. Below is an example usage:
+
+    for i in ATCTGACTGG ATCTAGCTGC ....; do ./Adaptor_trimmer -i multiplexed1.fastq multiplexed2.fastq -5 $i -o $i.fastq -l 1 -n no_barcode_found.fastq -f fastq; done
+  
+  Code explanation: You can specify barcode as many as you would in the ecllipse position. Above I set the edit distance to be 1. 
+  You can set your own according to your situation. By the way, all the example showing above regarding Adaptor_trimmer are 
+  dealing with fastq files, if you want to handle fasta file, just leave off the "-f fastq" option.
