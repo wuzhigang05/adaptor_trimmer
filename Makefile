@@ -21,9 +21,8 @@ endif
 
 GENERAL_LIST = $(shell $(FIND) data) \
 			   $(shell $(FIND) libs) \
-			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst \
-			   copy_seqan_dependence.py \
-			   $(shell $(FIND) . -name "*.sh")
+			   $(shell $(FIND) scripts) \
+			   Makefile LICENSE VERSION AUTHORS README.rst INSTALL.rst 
 SRC_PKG_LIST = $(wildcard *.h) \
                $(wildcard *.cc) \
                $(shell $(FIND) SeqAn1.3 Boost1.50) \
@@ -34,10 +33,14 @@ ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
 Adaptor_trimmer: Adaptor_trimmer.cc Fasta_reader.h seq.h $(ALL_FILES) 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	mkdir bin
+	mv $@ bin
 Guess_fastq_format: Guess_fastq_format.cc tools.h $(ALL_FILES)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	mv $@ bin
 Quality_trimmer: Quality_trimmer.cc tools.h $(ALL_FILES) 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
+	mv $@ bin
 
 Adaptor_trimmer.tgz: $(SRC_PKG_LIST)
 	rm -rf Adaptor_trimmer.tgz
