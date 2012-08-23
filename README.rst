@@ -1,3 +1,5 @@
+Introduction
+=============
 Adaptor trimming is an essential task before doing any serious analysis. 
 Most of current available adaptor trimming tools, which do not allow mismatches and indels. 
 However, sequencing error is unavoidable in most, if not all, of sequencing platforms. 
@@ -24,14 +26,16 @@ customizing the tool to tail their need by making the options available. For exa
 It supports both fasta and fastq formats and you can use Adaptor_trimmer as a UNIX command 
 tool by piping. Most importantly, adaptor_trimmer is fast and competes most avaible tools.
 
-Main feature:
-
+Main feature
+==============
   1. allowing mismatch and indel;
   2. support IUPAC adaptor trimming;
   3. support case-insensitive
   4. support cut leading and tailing bases
   5. support simple regular expression adaptor trimming
 
+Example Usage
+==============
 1. test Adaptor_trimmer fixed primer mode
   1. take input from stdin arbitrary number of fastq using pipe and cut both 5' and 3' adaptors 
      and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
