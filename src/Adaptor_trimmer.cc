@@ -339,7 +339,7 @@ void report_paramter_setting (const po::variables_map & vm,
   if (vm.count("out_no_adaptor"))
     out << setw(width) << left << "output file for seqs with no adaptor found:" 
          << setw(width) << left << vm["out_no_adaptor"].as<string>()<< endl;
-  if (vm.count("out_align"))
+  if (vm.count("out_align") && ! (vm.count("header") || vm.count("tail")))
     out << setw(width) << left << "out file for alignment between adaptor(s) and seq:" 
          << setw(width) << left << vm["out_align"].as<string>()<< endl;
   if (vm.count("case-insensitive"))
@@ -943,7 +943,7 @@ int main (int argc, char * argv[])
                                                             "STDIN"), 
      "Input file, has to be in fastq or fasta format")
     ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
-     "the format of input file, valid formats include fastq and fasta")
+     "the format of input file, valid formats include fastq and fasta [str]")
     ("five-mismatch,l", po::value<int>(), 
      "Allowed number of mismatches or gaps between the read sequence "
      "and the 5' adaptor sequence. By setting this value to 1, we are "
@@ -957,20 +957,20 @@ int main (int argc, char * argv[])
      "of the adaptor length, for those without adaptors an unpredictable position will "
      "be reported. In other words, this way will cause false positive. So, by "
      "default this value is set to 20% percent of the of 5' adaptor length. In "
-     "circumstances where you want to do exact match, set this value to 0.")
+     "circumstances where you want to do exact match, set this value to 0. [int]")
     ("three-mismatch,r", po::value<int>(), 
      "Generally same as -l option but for 3' adaptor sequence. "
      "By default this value is set to 20% percent of 3' adaptor "
-     "sequence if you specified a 3' adaptor.")
+     "sequence if you specified a 3' adaptor. [int]")
     ("percent,p", po::value<float>()->default_value(0.2, "0.2"), 
      "Percent of length of adaptor will be used as parameter for five-mismatch and "
      "three-mismatch. For example, if set this number to 0.2, the length of 5' adaptor"
      "is the 20 and the length of 3' is 10, then 4 (0.2*20) and 2 (0.2*10) will be"
-     "will be used as the value for the five-mismatch and three-mismatch, respectively.")
+     "will be used as the value for the five-mismatch and three-mismatch, respectively. [float]")
     ("out_with_adaptor,o", po::value<string>(), 
-     "Clean sequence with adaptor trimmed will be write to this file. default [STDOUT]")
+     "Clean sequence with adaptor trimmed will be write to this file. default: STDOUT [str]")
     ("out_no_adaptor,n", po::value<string>(), 
-     "Sequence without adaptor being found will be write to this file. default [STDOUT]")
+     "Sequence without adaptor being found will be write to this file. default: STDOUT [str]")
     ("out_align,a", po::value<string>()->default_value(alignment_log, 
                                                        "Alignment_log_....txt"), 
      "If an adaptor is found within a read sequence, the alignment between adaptor(s) "
@@ -981,16 +981,15 @@ int main (int argc, char * argv[])
     ("IUPAC,U", po::value(&IUPAC)->zero_tokens(), 
      "Toggle to start IUPAC match, default is OFF. Note if you set IUPAC mode, no mismatch "
      "indel will be allowed. This option is uncompatible with -l and -r option. "
-     "True if present")
+     "True if present.")
     ("head,H", po::value<int>(), 
      "Cut the leading n base from the input seq. If this option is set, it will ignore"
      "-l -r -U, -I options which in this case make no sense. The trimmed seq will be print to"
      "-o, or STDOUT, those witout being trimmed due to  will be print to -n or STDOUT. [int]")
     ("tail,t", po::value<int>(), "Cut the tailing n base from the input seq. Others are same"
      "as -H option. [int]")
-//    ("length-cutoff", po::value<int>()->default_value(0, "0"), 
-//     "suppress trimmed sequence length less than this value from output. This option is not"
-//     "supported at this moment")
+    ("length-cutoff", po::value<int>()->default_value(0, "0"), 
+     "suppress trimmed sequence length less than this value from output. [int]")
     ;
   po::positional_options_description p;
   p.add("input", -1);
@@ -1057,8 +1056,7 @@ int main (int argc, char * argv[])
 
   }
   std::ostream & OS_no_adaptor = vm.count("out_no_adaptor") ? out1 : std::cout;
-  ofstream out_alignment(vm["out_align"].as<string>().c_str());
-  std::ostream & OS_alignment = out_alignment;
+
   if(vm.count("head") || vm.count("tail"))/* if any of this two set, ignore all other options*/
   {
     if (vm["input"].as<vector<string> >().size() == 1 &&
@@ -1089,6 +1087,9 @@ int main (int argc, char * argv[])
     }
 
   }
+
+  ofstream out_alignment(vm["out_align"].as<string>().c_str()); // I put this below vm.count(header) and v.count(tail)
+  std::ostream & OS_alignment = out_alignment;  /* because if any of them is true, we will not write alignment report */
 
   if (five_adaptor != ""  && three_adaptor != "")
   {

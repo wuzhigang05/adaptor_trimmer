@@ -35,8 +35,9 @@ ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
 Adaptor_trimmer: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_DIR)/seq.h $(ALL_FILES) 
 	@echo compiling: $@
-	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
 	@echo compiling: $@ done
+	rm -rf bin
 	mkdir bin
 	mv $@ bin
 Guess_fastq_format: $(SRC_DIR)/Guess_fastq_format.cc $(SRC_DIR)/tools.h $(ALL_FILES)
@@ -69,3 +70,5 @@ clean:
 	rm -rf *.swp
 	rm -rf $(targets)
 	rm -rf bin
+	rm -f Alignment_log*
+	rm -f with_5_adaptor no_5_adaptor

@@ -93,11 +93,11 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
 
   * read input from file 
         
-        Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
+        ./Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
 
   * read input from STDIN (pipe) 
         
-        cat data/adaptor_test_data.fastq | Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
+        cat data/adaptor_test_data.fastq | ./Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
 
 **Companion tools**
 -----------------
@@ -130,7 +130,7 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
 
 
 
-**Using three tool as a whole**
+**Using three tools as a whole**
 
     ./Guess_fastq_format data/AS10.fastq
 
