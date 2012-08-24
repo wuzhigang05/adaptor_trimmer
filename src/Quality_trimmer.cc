@@ -163,12 +163,12 @@ int main (int argc, char * argv[])
 "\n" PROG_NAME " Part of NGS C++ Toolkit by Zhigang Wu zhigang.wu@email.ucr.edu.\n"
 "Given a fastq file and a quality cutoff, the program will gurantee to return a longest\n"
 "contiguous segment of sequence, in which the minimum quality score for each nucleotide \n"
-"is >= specified quality cutoff. If you know your fastq format clearly in which format. \n"
-"That's please specify it. If you don't know, using Guess_fastq_fromat to guess it first.\n" 
-"The format matters becuase fastq-sanger format use an offset of 33 while all others \n"
-"(fastq-illumina, fastq-Solexa) are using an offset of 64. If you are using Roche 454 \n"
-"sequencing, it's highly possible that the fastq is in fastq-sanger format. Please see \n"
-"Nucleic Acids Res. 2010 April; 38(6): 1767–1771. for more information about fastq format.\n"
+"is >= specified quality cutoff. You have to specify the fastq format, which you can get\n"
+"by running Guess_fastq_fromat. The format matters becuase fastq-sanger format use an\n"
+"offset of 33 while all others (fastq-illumina, fastq-Solexa) are using an offset of 64.\n"
+"If you are using Roche 454 sequencing, it's highly possible that the fastq is in \n"
+"fastq-sanger format. Please see Nucleic Acids Res. 2010 April; 38(6): 1767–1771.\n"
+"for more information about fastq format.\n"
    );
   desc.add_options()
     ("help,h", "print this help page")
