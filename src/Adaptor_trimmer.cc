@@ -931,39 +931,36 @@ int main (int argc, char * argv[])
   get_time_stamp(buf);
   string alignment_log = string("Alignment_log_") + string(buf);
   po::options_description desc(
-      "\nPart of NGS C++ Toolkit by Zhigang Wu zhigang.wu@email.ucr.edu.\n"
-      "Note I assume that in your input fasta file only contains DNA sequence\n"
-      "[ATCGN], if you have input file with RNA sequence, please use command\n"
-      "tr 'T' 'U' <input >output to convert first.\n"
+      "\nPart of NGS C++ Toolkit by Zhigang Wu zhigang.wu@email.ucr.edu.\n\n"
      );
   desc.add_options()
-    ("help,h", "print this help page")
+    ("help,h", "Print this help page. True if present.")
     ("five,5", po::value<string>(), 
-     "five prime adaptor sequence.")
+     "Five prime adaptor sequence. [str]")
     ("three,3", po::value<string>(), 
-     "three prime adaptor sequence. You have to specify at least one 5' or 3' adaptor sequence")
+     "Three prime adaptor sequence. [str]")
     ("input,i", po::value<vector<string> >()->default_value(vector<string>(1, "stdin"), 
                                                             "STDIN"), 
-     "input file, has to be in fastq or fasta format")
+     "Input file, has to be in fastq or fasta format")
     ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
      "the format of input file, valid formats include fastq and fasta")
     ("five-mismatch,l", po::value<int>(), 
-     "allowed number of mismatches or gaps between the read sequence "
+     "Allowed number of mismatches or gaps between the read sequence "
      "and the 5' adaptor sequence. By setting this value to 1, we are "
      "allowing two mismatches between adaptor and read sequence or 1 deletion "
      "in the read sequence or 2 insertions in the read sequence. So, if you set "
-     "this value to 2, you multiply by 2 to get a sense of how many of mismatches "
+     "this value to 2, you multiply by 2 to get a sense of how many of mismatches &"
      "indels allowed in the alignment. Since the program gurantees only report the "
-     "the best alignment so idealy setting this value the larger the better. The "
-     "maximum value you can set is the half of the shortest length of the adaptors "
-     "you specified. Doing so is completely fine for those sequence with adaptor "
-     "sequences. However, for those reads without adaptor squences will be wrongly "
-     "trimmed. In other words, this way will cause some false positive. By default "
-     "this value is set to 20% percent of the of 5' adaptor length if you provided, "
-     "5' adaptor. In circumstances where you want to do exact match, set this value to 0.")
+     "the best alignment, so setting this value the larger the better. Doing so is "
+     "fine for those sequence with adaptor sequences. However, for those reads without "
+     "adaptor squences will be wrongly trimmed. If you set this value, e.g. half of "
+     "of the adaptor length, for those without adaptors an unpredictable position will "
+     "be reported. In other words, this way will cause false positive. So, by "
+     "default this value is set to 20% percent of the of 5' adaptor length. In "
+     "circumstances where you want to do exact match, set this value to 0.")
     ("three-mismatch,r", po::value<int>(), 
-     "allowed number of mismatches or gaps between the read sequence and the 3' "
-     "adaptor sequence. By default this value is set to 20% percent of 3' adaptor "
+     "Generally same as -l option but for 3' adaptor sequence. "
+     "By default this value is set to 20% percent of 3' adaptor "
      "sequence if you specified a 3' adaptor.")
     ("percent,p", po::value<float>()->default_value(0.2, "0.2"), 
      "Percent of length of adaptor will be used as parameter for five-mismatch and "
@@ -971,27 +968,29 @@ int main (int argc, char * argv[])
      "is the 20 and the length of 3' is 10, then 4 (0.2*20) and 2 (0.2*10) will be"
      "will be used as the value for the five-mismatch and three-mismatch, respectively.")
     ("out_with_adaptor,o", po::value<string>(), 
-     "clean sequence with adaptor trimmed will be write to this file. default [STDOUT]")
+     "Clean sequence with adaptor trimmed will be write to this file. default [STDOUT]")
     ("out_no_adaptor,n", po::value<string>(), 
-     "sequence without adaptor found will be write to this file. default [STDOUT]")
+     "Sequence without adaptor being found will be write to this file. default [STDOUT]")
     ("out_align,a", po::value<string>()->default_value(alignment_log, 
                                                        "Alignment_log_....txt"), 
-     "if an adaptor is found for a sequence, the alignment between adaptor(s) and this sequence"
-     " will be write to this file.")
+     "If an adaptor is found within a read sequence, the alignment between adaptor(s) "
+     "and this sequence and the distance between adaptor(s) and ends will be write "
+     "to this file. The file is generated automatically you don't need to specify anything.")
     ("case-insensitive,I", po::value(&case_insensitive)->zero_tokens(), 
-     "Toggle to switch case insensitive default is ON")
+     "Toggle to switch case insensitive default is ON. True if present.")
     ("IUPAC,U", po::value(&IUPAC)->zero_tokens(), 
      "Toggle to start IUPAC match, default is OFF. Note if you set IUPAC mode, no mismatch "
-     "indel will be allowed. This option is uncompatible with -l and -r option.")
+     "indel will be allowed. This option is uncompatible with -l and -r option. "
+     "True if present")
     ("head,H", po::value<int>(), 
-     "cut the leading n base from the input seq. If this option is set, it will ignore"
+     "Cut the leading n base from the input seq. If this option is set, it will ignore"
      "-l -r -U, -I options which in this case make no sense. The trimmed seq will be print to"
-     "-o, or STDOUT, those witout being trimmed due to  will be print to -n or STDOUT")
-    ("tail,t", po::value<int>(), "cut the tailing n base from the input seq. Others are same"
-     "as -H option.")
-    ("length-cutoff", po::value<int>()->default_value(0, "0"), 
-     "suppress trimmed sequence length less than this value from output. This option is not"
-     "supported at this moment")
+     "-o, or STDOUT, those witout being trimmed due to  will be print to -n or STDOUT. [int]")
+    ("tail,t", po::value<int>(), "Cut the tailing n base from the input seq. Others are same"
+     "as -H option. [int]")
+//    ("length-cutoff", po::value<int>()->default_value(0, "0"), 
+//     "suppress trimmed sequence length less than this value from output. This option is not"
+//     "supported at this moment")
     ;
   po::positional_options_description p;
   p.add("input", -1);

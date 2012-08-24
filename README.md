@@ -147,3 +147,9 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
   Code explanation: You can specify barcode as many as you would in the ecllipse position. Above I set the edit distance to be 1. 
   You can set your own according to your situation. By the way, all the example showing above regarding Adaptor_trimmer are 
   dealing with fastq files, if you want to handle fasta file, just leave off the "-f fastq" option.
+
+**Suggestions and Bugs**
+
+Please send your comments and bug reports to zhigang.wu@email.ucr.edu
+
+
