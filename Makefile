@@ -41,12 +41,12 @@ Adaptor_trimmer: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_D
 	mv $@ bin
 Guess_fastq_format: $(SRC_DIR)/Guess_fastq_format.cc $(SRC_DIR)/tools.h $(ALL_FILES)
 	@echo compiling: $@
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
+	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
 	@echo compiling: $@ done
 	mv $@ bin
 Quality_trimmer: $(SRC_DIR)/Quality_trimmer.cc $(SRC_DIR)/tools.h $(ALL_FILES) 
 	@echo compiling: $@
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
+	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS)
 	@echo compiling: $@ done
 	mv $@ bin
 
