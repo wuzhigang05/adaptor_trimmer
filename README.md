@@ -110,22 +110,22 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
 
 **Guess_fastq_format**
 
-  Guess_fastq_format as its indicates is able to tell the format of fastq in terms of fastq-sanger, fastq-solex, 
-  fastq-illumina. It your sequence is from Roche 454 then its highly possible that your sequence format is in fastq-sanger 
-  format. You can refer to Nucleic Acids Res. 2010 April; 38(6): 1767–1771. for more information about fastq format. 
-  Below is a typical usage of Guess_fastq_format:
+  Guess_fastq_format as its indicates is able to tell the format of FASTQ in terms of fastq-sanger, fastq-solex, 
+  fastq-illumina. If your sequence is generated from Roche 454 then its highly possible that your sequence is in 
+  fastq-sanger format. You can refer to Nucleic Acids Res. 2010 April; 38(6): 1767–1771. for more information 
+  about FASTQ format. Below is a typical usage of Guess_fastq_format:
     
-    Guess_fastq_format data/FS2.fastq 
+    ./Guess_fastq_format data/FS2.fastq 
 
 
 **Quality_trimmer**
   
-  Quality_trimmer is able to extract the sub-maximum array of sequence positions in terms of sequence quality cutoff, which
-  you have to specify in order to run the program. In addition to that, one also need to specify the format of the fastq being
-  examined. As mentioned above, you can get this information by running Guess_fastq_format program. Below is a typical usage of
-  Quality_trimmer. I instructed the program to extract the maximum contiguous region with quality score >= 20 from 
-  data/AS10.fastq file which is in fastq-sanger format (-f) and write the extracted result which meet the length requirement of 
-  100 (-l) to seqs_nolessthan20.fastq and the sequences failed length filtering to seqs_lessthan20.fastq (-s).
+  Given a sequence quality cutoff Quality_trimmer is able to extract the sub-maximum array of sequence positions out.
+  In addition to that, one also need to specify the format of the fastq being examined. As mentioned above, you can 
+  get this information by running Guess_fastq_format program. Below is a typical usage of Quality_trimmer. I instructed 
+  the program to extract the maximum contiguous region with quality score >= 20 from data/AS10.fastq file which is in 
+  fastq-sanger format (-f) and write the extracted result which meet the length requirement of 100 (-l) to 
+  seqs_nolessthan20.fastq and the sequences failed length filtering to seqs_lessthan20.fastq (-s).
 
     ./Quality_trimmer -f "fastq-sanger" data/AS10.fastq -c 20 -l 100  -s seqs_lessthan20.fastq >seqs_nolessthan20.fastq
 
