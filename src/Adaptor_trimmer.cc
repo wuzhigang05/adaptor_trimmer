@@ -934,14 +934,14 @@ int main (int argc, char * argv[])
       "\nPart of NGS C++ Toolkit by Zhigang Wu zhigang.wu@email.ucr.edu.\n\n"
      );
   desc.add_options()
-    ("help,h", "Print this help page. True if present.")
+    ("help,h", "Print this help page. True if present. [Boolean]")
     ("five,5", po::value<string>(), 
      "Five prime adaptor sequence. [str]")
     ("three,3", po::value<string>(), 
      "Three prime adaptor sequence. [str]")
     ("input,i", po::value<vector<string> >()->default_value(vector<string>(1, "stdin"), 
                                                             "STDIN"), 
-     "Input file, has to be in fastq or fasta format")
+     "Input file, has to be in fastq or fasta format. [str]")
     ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
      "the format of input file, valid formats include fastq and fasta [str]")
     ("five-mismatch,l", po::value<int>(), 
@@ -977,11 +977,11 @@ int main (int argc, char * argv[])
      "and this sequence and the distance between adaptor(s) and ends will be write "
      "to this file. The file is generated automatically you don't need to specify anything.")
     ("case-insensitive,I", po::value(&case_insensitive)->zero_tokens(), 
-     "Toggle to switch case insensitive default is ON. True if present.")
+     "Toggle to switch case insensitive default is ON. True if present. [Boolean]")
     ("IUPAC,U", po::value(&IUPAC)->zero_tokens(), 
      "Toggle to start IUPAC match, default is OFF. Note if you set IUPAC mode, no mismatch "
      "indel will be allowed. This option is uncompatible with -l and -r option. "
-     "True if present.")
+     "True if present. [Boolean]")
     ("head,H", po::value<int>(), 
      "Cut the leading n base from the input seq. If this option is set, it will ignore"
      "-l -r -U, -I options which in this case make no sense. The trimmed seq will be print to"

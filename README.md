@@ -4,28 +4,28 @@
 Adaptor trimming is an essential task before doing any serious analysis. 
 Most of current available adaptor trimming tools, which do not allow mismatches and indels. 
 However, sequencing error is unavoidable in most, if not all, of sequencing platforms. 
-Using these adatpor trimming tools will leave adaptors carrying sequencing 
+Using these adaptor trimming tools will leave adaptors carrying sequencing 
 error untrimmed. This undoubtedly will cause artifically and non-biologically meaningful bias, 
-which is undesirable. Additionally, current adatpor trimming  tools seems also having trouble to
+which is undesirable. Additionally, current adaptor trimming  tools seems also having trouble to
 handle sequences having ambigous IUPAC nucleotides(one position have several alternative 
 nucleotides). They are very widely used in studies aims to investigate microbial 
 community diversity. If ambiguous IUPAC nucleotide only occur in single position, one can 
 circumvent the limit of not allowing mismatch and indel exerted by current adaptor trimming tools 
-by running the adaptor trimming tools couple times with different combinations of adatpors. 
+by running the adaptor trimming tools couple times with different combinations of adaptors. 
 However, if ambiguous IUPAC nucleotides occurs in multiple positions, such as the universal IUPAC
 primer used to amply Archea 16S contains 5 IUPAC nucleotide position 
 (GYGCASCAGKCGMGAAW which is equivalent to G[CT]GCA[CG]CAG[GT]CG[CA]GAA[AT]). it would be extremely 
-curbersome to trim (at least 2^^5 combination). We need a versatile adatpor trimming tool that 
+cumbersome to trim (at least 2^^5 combination). We need a versatile adaptor trimming tool that 
 is able to handling sequencing error and ambiguous IUPAC nucleotides to cope with the rapid 
-advancement of sequecning technology. Adatpor_trimmer is a trimming tool impletemented in C++ 
-that handles these two problems efficicently. It has three modes: 1) the fixed adaptor mode, 
+advancement of sequecning technology. adaptor_trimmer is a trimming tool impletemented in C++ 
+that handles these two problems efficicently. It has three modes: 1) the dynamic programmming mode, 
 which is based on dynamic programming, handles sequence contains mismatches and indels 
 efficiently; 2) the IUPAC mode, which is based on regular expression search engine, processes 
 ambiguous IUPAC adaptor efficiently; in the other mode one can simply cut any specified number 
 of heading and tailing bases. Generally, the tool is very straightfoward to use. We have 
 carefully chosen the default value for all optional options so that it requires minimal effort 
 from the user. But also we tried to give the user the flexibility of customizing the tool to 
-tail their need by making these options available. For example, it takes both fasta and fastq 
+tail their need by making these options available. For example, it takes both FASTA and FASTQ 
 formats and you can use Adaptor_trimmer as a typical UNIX command tool which can take I/O 
 by piping. Most importantly, adaptor_trimmer is fast and competes most avaible tools.
 
@@ -41,25 +41,25 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
 **Example usage**
 -----------------
 
-** Test Adaptor_trimmer fixed primer mode. **
+** Test Adaptor_trimmer dynamic programming mode. **
 
-  * Take input from arbitrary number of fastqs using pipe and cut both 5' and 3' adaptors 
-    and force exact match both for 5' adaptor (via -l option) and 3' adaptor (via -r option).
-    write sequences with adaptor found to with_5_adaptor and sequences with no adaptor found 
-    to no_5_adaptor, both of which will be write to STDOUT by default. For illustration purpose,
-    here I am catting from two same fastqs, you can of course cat from different fastqs in reality.
+  * Here we instruct the program to take input from arbitrary number of FASTQs using pipe, 
+    cut both 5' and 3' adaptors and force it to use exact match for both 5' adaptor (via -l 
+    option) and 3' adaptor (via -r option). We also instruct the program to write sequences 
+    with adaptor being found to with_5_adaptor and sequences with no adaptor being found to 
+    no_5_adaptor, both of which will be write to STDOUT by default. For illustration purpose, 
+    here I am catting from two same FASTQs, you can of course cat from different FASTQs in 
+    reality.
 
-        cat data/adaptor_test_data.fastq data/adaptor_test_data.fastq | Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
+        cat data/adaptor_test_data.fastq data/adaptor_test_data.fastq | ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
 
-  * Same as above but take input from an arbitrary number of files (-i) and trimming adaptors 
+  * Same as above but taking input from an arbitrary number of files (-i) and trimming adaptors 
     using default paramters (editing distance), which is 20% of respective adaptor length. 
     **This is the parameter most of user should use.** Don't worry about we are setting the 
     eidt distance too high here, if there are several alignments between adaptor and sequence 
-    meeting the requirement, program will always ONLY report the best alignment. This means 
-    if there is a exact match. The program will only report the exact match position, even 
-    though we are allowing mismatches and indels.
+    meeting the requirement, program will always **ONLY** report the best alignment. 
 
-        Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
+        ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
 -3 IAMARiGHTADAPTOR -f fastq
 
 ** Test Adaptor_trimmer IUPAC mode. **
@@ -70,6 +70,7 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
  
   * Adaptor_trimmer also support simple regular expression only allowing use of square brackets 
     [] to denote alternative nucleotides. 
+
         cat data/AS10.fastq | ./Adaptor_trimmer  -I -5 G[CT]GCA[CG]CAG[GT]CG[CA]GAA[AT] -o with_5_adaptor -n no_5_adaptor -U -f fastq  
  
 ** Performance test: comparison of dynamic programming mode and regular expression mode. **
