@@ -33,10 +33,10 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
 ----------------
 
   1. allowing mismatch and indel;
-  2. support IUPAC adaptor trimming;
-  3. support case-insensitive
-  4. support cut leading and tailing bases
-  5. support simple regular expression adaptor trimming
+  2. supporting IUPAC adaptor trimming;
+  3. supporting case-insensitive
+  4. supporting cut leading and tailing bases
+  5. supporting simple regular expression adaptor trimming
 
 **Example usage**
 -----------------
