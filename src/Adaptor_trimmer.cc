@@ -932,13 +932,17 @@ int main (int argc, char * argv[])
   string alignment_log = string("Alignment_log_") + string(buf);
   po::options_description desc(
       "\nPart of NGS C++ Toolkit by Zhigang Wu zhigang.wu@email.ucr.edu.\n\n"
-     );
+      );
   desc.add_options()
     ("help,h", "Print this help page. True if present. [Boolean]")
     ("five,5", po::value<string>(), 
-     "Five prime adaptor sequence. [str]")
+     "Five prime adaptor sequence. Any sequence follows this 5' adaptor will "
+     "be retained and any sequence precedes 5' adaptor (including 5' adaptor) "
+     "will be trimmed off. [str]")
     ("three,3", po::value<string>(), 
-     "Three prime adaptor sequence. [str]")
+     "Three prime adaptor sequence. Any sequence precedes 3' adaptor will be retained "
+     "and any sequence follows 3' adaptor (including 3' adaptor) will be "
+     "trimmed off. [str]")
     ("input,i", po::value<vector<string> >()->default_value(vector<string>(1, "stdin"), 
                                                             "STDIN"), 
      "Input file, has to be in fastq or fasta format. [str]")
