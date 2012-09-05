@@ -1,0 +1,8 @@
+time ./Adaptor_trimmer -f fastq FS11_subsample1000.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor
+time cutadapt -e 0.2 -g TGGAGGGCAAGTCTGGTG FS11_subsample1000.fastq --untrimmed-output no_5_adaptor_cutadapt -o with_5_adaptor_cutadapt
+
+Seems like Cutadapt have a small bug, take a look at:
+diff with_5_adaptor with_5_adaptor_cutadapt
+
+real:   TGGAGGGCAAGCNGNCCG
+adap:   TGGAGGGCAAGTCTGGTG
