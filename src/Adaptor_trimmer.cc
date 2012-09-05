@@ -214,6 +214,7 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
    *  place rather than return a copy of original string*/
   CharString query_uppercase = query;
   CharString db_uppercase = db;
+  const char * tmp = toCString(id);
   if (CaseInSensitive)
   {
     toUpper(query_uppercase);
@@ -230,8 +231,20 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
   if(nextLocalAlignment(Ali, enumerator))
   {
     unsigned start_pos = clippedBeginPosition(row(Ali, 0));
+    unsigned d_end =clippedEndPosition(row(Ali, 1)); 
+    int d_gaps = num_of_gaps(Ali, 1);
     int gaps = num_of_gaps(Ali, 0);
-    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps; /* inclusive */
+    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + length(db) - d_end + d_gaps; /* inclusive */
+    //                                                          ------------------------------
+    //                                                          if the best alignment does not extend to the end of adaptor then add these up
+    //                              below is the case
+    //                        startpos = 12, end_pos = 23, d_start = 0, d_end = 11
+    //            0          10        20
+    //            TCAGATCTTCTATGGAGGGCAAGCNGNCCGAGCGAGCCGCGGTAATCCCAGCTCCAATAGCG
+    //     query(read):       TGGAGGGCAAG
+    //                        |||||||||||
+    //     db(adaptor):       TGGAGGGCAAG 
+    //     Full Adaptor:      TGGAGGGCAAGTCTGGTG                                               
     if (direction == string("five")) 
     {
       os_align << ">" << id << "_five" << endl;

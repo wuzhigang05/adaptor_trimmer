@@ -10,7 +10,7 @@ RELEASE_FLAGS = -O3
 NOASSERT_FLAGS = -DNDEBUG
 
 CXXFLAGS = -O3 $(INC)
-
+DEBUG_CXXFLAGS = -ggdb $(INC)
 FIND :=$(shell which find)
 # default link with mac libraries
 LINKS = $(shell $(FIND) libs/mac -type f)
@@ -40,6 +40,8 @@ Adaptor_trimmer: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_D
 	rm -rf bin
 	mkdir bin
 	mv $@ bin
+debug: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_DIR)/seq.h $(ALL_FILES) 
+	$(CXX) $(DEBUG_CXXFLAGS)  -o Adaptor_trimmer $(SRC_DIR)/Adaptor_trimmer.cc $(LINKS) 
 Guess_fastq_format: $(SRC_DIR)/Guess_fastq_format.cc $(SRC_DIR)/tools.h $(ALL_FILES)
 	@echo compiling: $@
 	@$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
