@@ -92,11 +92,11 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
 
 ** Test Adaptor_trimmer using leading and tailing bases mode. **
 
-  * read input from file 
+  * Below I instruct Adaptor_trimmer to take input from file (note I didn't use specify -i here, the program will automatically take data/adaptor_test_data.fastq as input file), cut off 12 leading bases (-H) and tailing 4 bases (-t) and write the trimmed reads to with_5_adaptor(-o).
         
         ./Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
 
-  * read input from STDIN (pipe) 
+  * Below I instruct Adaptor_trimmer to take  input from STDIN (pipe) and do the same thing as above.
         
         cat data/adaptor_test_data.fastq | ./Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor -f fastq
 
@@ -123,7 +123,7 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
   Given a sequence quality cutoff Quality_trimmer is able to extract the sub-maximum array of sequence positions out.
   In addition to that, one also need to specify the format of the fastq being examined. As mentioned above, you can 
   get this information by running Guess_fastq_format program. Below is a typical usage of Quality_trimmer. I instructed 
-  the program to extract the maximum contiguous region with quality score >= 20 from data/AS10.fastq file which is in 
+  the program to extract the maximum contiguous region with quality score >= 20 (-c) from data/AS10.fastq file which is in 
   fastq-sanger format (-f) and write the extracted result which meet the length requirement of 100 (-l) to 
   seqs_nolessthan20.fastq and the sequences failed length filtering to seqs_lessthan20.fastq (-s).
 
