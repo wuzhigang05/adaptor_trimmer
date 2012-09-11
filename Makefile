@@ -9,7 +9,7 @@ DEBUG_FLAGS = -O0 -g3
 RELEASE_FLAGS = -O3 
 NOASSERT_FLAGS = -DNDEBUG
 
-CXXFLAGS = -O3 $(INC)
+CXXFLAGS = -ggdb $(INC)
 DEBUG_CXXFLAGS = -ggdb $(INC)
 FIND :=$(shell which find)
 # default link with mac libraries
@@ -74,3 +74,6 @@ clean:
 	rm -rf bin
 	rm -f Alignment_log*
 	rm -f with_5_adaptor no_5_adaptor
+	rm -rf Adaptor_trimmer.dSYM
+	rm -rf Quality_trimmer.dSYM
+	rm -rf Guess_fastq_format.dSYM

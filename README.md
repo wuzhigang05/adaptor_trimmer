@@ -149,6 +149,21 @@ tools along with Adaptor_trimmer. They are **Guess_fastq_format and Quality_trim
   You can set your own according to your situation. By the way, all the example showing above regarding Adaptor_trimmer are 
   dealing with fastq files, if you want to handle fasta file, just leave off the "-f fastq" option.
 
+  Below is another example, in which I take together of demultiplexing and 5'adatpor trimming into one step. I assume that 
+  data/multiplexing.fastq contain sequencing reads from different biological treatments. For example, reads contain (ACGCCGCA) 
+  are from stress condition, while reads contain ACGTGTTA are from control condition. All reads contain an adaptor gagtttgatc[atcg]tggctcag
+  which immediately follows the barcode. So, one can just feed the barcodes + adaptor sequence to the program, program will automatically
+  do the trimming for you. Below I instruct the program to take input in fastq format (-f) from STDIN by piping, remove two concatenated 
+  5' adaptors (-5) with case-insensitive mode on. Please note two files: ACGCCGCAgagtttgatcntggctcagwith5_adaptor.fastq 
+  ACGTGTTAgagtttgatcntggctcagwith_5_adaptor.fastq will be generated in current directories, if you dont' specify -o, the result will be directed 
+  to STDOUT.
+
+    cat data/multiplexing.fastq | ./Adaptor_trimmer -I -5 ACGCCGCAgagtttgatcntggctcag -5 ACGTGTTAgagtttgatcntggctcag -f fastq -o with_5_adaptor
+
+  Same thing as above but read from multiple fastq files instead of STDIN.
+
+    ./Adaptor_trimmer -I -5 ACGCCGCAgagtttgatcntggctcag -5 ACGTGTTAgagtttgatcntggctcag -f fastq  -i  data/multiplexing.fastq data/multiplexing.fastq  -o with_5_adaptor
+
 **Suggestions and Bugs**
 
 Please send your comments and bug reports to zhigang.wu@email.ucr.edu
