@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <err.h>
 #include "Fasta_reader.h"
+#include "readRecord.h"
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -735,6 +736,73 @@ std::map<CharString, std::ostream*> GetMapOfFile2Ofstream (const po::variables_m
   return m;
 }
 
+template <typename TStream>
+void read_process_5_3_fastq(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTQ()))
+  {
+    ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+        case_insensitive, OS_alignment, d5, IUPAC);
+    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        case_insensitive, OS_alignment, d3, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+
+}
+
+template <typename TStream>
+void read_process_5_fastq(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTQ()))
+  {
+    ++total;
+    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+        case_insensitive, OS_alignment, d5, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+}
+
+template <typename TStream>
+void read_process_3_fastq(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTQ()))
+  {
+    ++total;
+    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        case_insensitive, OS_alignment, d3, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+}
+
 /* This is the main interface that process sequences from STDIN
  */
 void TrimmingSeq_from_stdin( const po::variables_map & vm, 
@@ -783,47 +851,31 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
     int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
     int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
     CharString id, query, qual;
-    seqan::RecordReader<std::istream, seqan::SinglePass<> > reader(std::cin);
+    Seqrecord seq;
     if (inspect_5 && inspect_3)
     {
-      while(readRecord_stdin(id, query, qual, reader, format))
-      {
-        ++total;
-        examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-            case_insensitive, OS_alignment, d5, IUPAC);
-        examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-            case_insensitive, OS_alignment, d3, IUPAC);
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual);
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
-      }
+      read_process_5_3_fastq(std::cin, five_adaptor, three_adaptor, 
+                              five_allowed_mismatch_indel, 
+                              three_allowed_mismatch_indel, 
+                              case_insensitive, OS_alignment, 
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
     }
     else if (inspect_5)
     {
-      while(readRecord_stdin(id, query, qual, reader, format))
-      {
-        ++total;
-        examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-            case_insensitive, OS_alignment, d5, IUPAC);
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual);
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
-      }
+      read_process_5_fastq(std::cin, five_adaptor, three_adaptor, 
+                              five_allowed_mismatch_indel, 
+                              three_allowed_mismatch_indel, 
+                              case_insensitive, OS_alignment, 
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
     }
     else if (inspect_3)
     {
-      while(readRecord_stdin(id, query, qual, reader, format))
-      {
-        ++total;
-        examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-            case_insensitive, OS_alignment, d3, IUPAC);
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual);
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
-      }
+      read_process_3_fastq(std::cin, five_adaptor, three_adaptor, 
+                              five_allowed_mismatch_indel, 
+                              three_allowed_mismatch_indel, 
+                              case_insensitive, OS_alignment, 
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
+
     }
     else
       errx(1, "one of inspect_3 and inspect_5 has to be true");
