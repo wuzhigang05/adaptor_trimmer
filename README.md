@@ -59,8 +59,7 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
     eidt distance too high here, if there are several alignments between adaptor and sequence 
     meeting the requirement, program will always **ONLY** report the best alignment. 
 
-        ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT 
--3 IAMARiGHTADAPTOR -f fastq
+        ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq
 
 ** Test Adaptor_trimmer IUPAC mode. **
 
