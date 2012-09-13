@@ -484,55 +484,55 @@ CharString translate_IUPAC(const CharString & db)
   CharString new_db = str_db;
   return new_db;
 }
-/* below is like a generator function in python, which will read one record
- * per time*/
-int readRecord_stdin(CharString & id, CharString & query, CharString & qual, 
-                  seqan::RecordReader<std::istream, seqan::SinglePass<> > & reader,
-                  const char * format)
-{
-  if (strcmp(format, "fastq") == 0)
-  {
-    if(readRecord(id, query, qual, reader, Fastq()) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, reader, Fasta()) == 0)
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
-    }
-    return 0;
-  }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
-/* below is like a generator function in python, which will read one record
- * per time*/
-int readRecord_Stream(CharString & id, CharString & query, CharString & qual, 
-                  seqan::SequenceStream & seqStream,
-                  const char * format)
-{
-  if (strcmp(format, "fastq") == 0)
-  {
-    if(readRecord(id, query, qual, seqStream) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, seqStream) == 0 )
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
-    }
-    return 0;
-  }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
-
+///* below is like a generator function in python, which will read one record
+// * per time*/
+//int readRecord_stdin(CharString & id, CharString & query, CharString & qual, 
+//                  seqan::RecordReader<std::istream, seqan::SinglePass<> > & reader,
+//                  const char * format)
+//{
+//  if (strcmp(format, "fastq") == 0)
+//  {
+//    if(readRecord(id, query, qual, reader, Fastq()) == 0)
+//      return 1;                                 /* indicates read record success */
+//    return 0;
+//  }
+//  else if (strcmp(format, "fasta") == 0)
+//  {
+//    if (readRecord(id, query, reader, Fasta()) == 0)
+//    { 
+//      qual = ""; /* set qual default value to empty for fasta format */
+//      return 1;
+//    }
+//    return 0;
+//  }
+//  else
+//    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
+//}
+///* below is like a generator function in python, which will read one record
+// * per time*/
+//int readRecord_Stream(CharString & id, CharString & query, CharString & qual, 
+//                  seqan::SequenceStream & seqStream,
+//                  const char * format)
+//{
+//  if (strcmp(format, "fastq") == 0)
+//  {
+//    if(readRecord(id, query, qual, seqStream) == 0)
+//      return 1;                                 /* indicates read record success */
+//    return 0;
+//  }
+//  else if (strcmp(format, "fasta") == 0)
+//  {
+//    if (readRecord(id, query, seqStream) == 0 )
+//    { 
+//      qual = ""; /* set qual default value to empty for fasta format */
+//      return 1;
+//    }
+//    return 0;
+//  }
+//  else
+//    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
+//}
+//
 int cut_leading_tailing_stdin(const po::variables_map & vm, 
                       ostream & OS_with_adaptor,
                       ostream & OS_no_adaptor,
@@ -758,9 +758,31 @@ void read_process_5_3_fastq(TStream & stream,
     else
       write_seq2stream(OS_no_adaptor, id, query, qual);
   }
-
 }
 
+template <typename TStream>
+void read_process_5_3_fasta(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTA()))
+  {
+    ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+        case_insensitive, OS_alignment, d5, IUPAC);
+    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        case_insensitive, OS_alignment, d3, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+}
 template <typename TStream>
 void read_process_5_fastq(TStream & stream, 
     const CharString & five_adaptor, const CharString & three_adaptor, 
@@ -773,6 +795,7 @@ void read_process_5_fastq(TStream & stream,
   while(ReadRecord(stream, seq, FASTQ()))
   {
     ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
     examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
         case_insensitive, OS_alignment, d5, IUPAC);
     if (judge_adaptor(d5,d3))
@@ -781,6 +804,29 @@ void read_process_5_fastq(TStream & stream,
       write_seq2stream(OS_no_adaptor, id, query, qual);
   }
 }
+
+template <typename TStream>
+void read_process_5_fasta(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTA()))
+  {
+    ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+        case_insensitive, OS_alignment, d5, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+}
+
 
 template <typename TStream>
 void read_process_3_fastq(TStream & stream, 
@@ -794,6 +840,29 @@ void read_process_3_fastq(TStream & stream,
   while(ReadRecord(stream, seq, FASTQ()))
   {
     ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        case_insensitive, OS_alignment, d3, IUPAC);
+    if (judge_adaptor(d5,d3))
+      write_seq2stream(OS_with_adaptor, id, query, qual);
+    else
+      write_seq2stream(OS_no_adaptor, id, query, qual);
+  }
+}
+
+template <typename TStream>
+void read_process_3_fasta(TStream & stream, 
+    const CharString & five_adaptor, const CharString & three_adaptor, 
+    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
+    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+{
+  Seqrecord seq;
+  CharString id, query, qual;
+  while(ReadRecord(stream, seq, FASTA()))
+  {
+    ++total;
+    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
     examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
         case_insensitive, OS_alignment, d3, IUPAC);
     if (judge_adaptor(d5,d3))
@@ -884,15 +953,15 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
   {
     CharString three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
   // m used to contain the std::map of filename to ofstream pointer
-     
     std::map<CharString, std::ostream*> m = GetMapOfFile2Ofstream(vm, format); 
-    CharString id, query, qual;
-    seqan::RecordReader<std::istream, seqan::SinglePass<> > reader(std::cin);
     if (inspect_5 && inspect_3)
     {
-      while(readRecord_stdin(id, query, qual, reader, format))
+      Seqrecord seq;
+      CharString id, query, qual;
+      while(ReadRecord(std::in, seq, FASTQ()))
       {
         ++total;
+        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         CharString five_adaptor;
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
@@ -920,9 +989,12 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
     }
     else if (inspect_5)
     {
-      while(readRecord_stdin(id, query, qual, reader, format))
+      Seqrecord seq;
+      CharString id, query, qual;
+      while(ReadRecord(std::in, seq, FASTQ()))
       {
         ++total;
+        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         CharString five_adaptor; 
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
@@ -952,9 +1024,12 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
       }
       std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
 
-      while(readRecord_stdin(id, query, qual, reader, format))
+      Seqrecord seq;
+      CharString id, query, qual;
+      while(ReadRecord(std::in, seq, FASTQ()))
       {
         ++total;
+        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         if (IUPAC)                              /* need to check 3' adaptor */
           three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
         int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
