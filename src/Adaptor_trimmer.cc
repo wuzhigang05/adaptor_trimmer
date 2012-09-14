@@ -484,148 +484,25 @@ CharString translate_IUPAC(const CharString & db)
   CharString new_db = str_db;
   return new_db;
 }
-///* below is like a generator function in python, which will read one record
-// * per time*/
-//int readRecord_stdin(CharString & id, CharString & query, CharString & qual, 
-//                  seqan::RecordReader<std::istream, seqan::SinglePass<> > & reader,
-//                  const char * format)
-//{
-//  if (strcmp(format, "fastq") == 0)
-//  {
-//    if(readRecord(id, query, qual, reader, Fastq()) == 0)
-//      return 1;                                 /* indicates read record success */
-//    return 0;
-//  }
-//  else if (strcmp(format, "fasta") == 0)
-//  {
-//    if (readRecord(id, query, reader, Fasta()) == 0)
-//    { 
-//      qual = ""; /* set qual default value to empty for fasta format */
-//      return 1;
-//    }
-//    return 0;
-//  }
-//  else
-//    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-//}
-///* below is like a generator function in python, which will read one record
-// * per time*/
-//int readRecord_Stream(CharString & id, CharString & query, CharString & qual, 
-//                  seqan::SequenceStream & seqStream,
-//                  const char * format)
-//{
-//  if (strcmp(format, "fastq") == 0)
-//  {
-//    if(readRecord(id, query, qual, seqStream) == 0)
-//      return 1;                                 /* indicates read record success */
-//    return 0;
-//  }
-//  else if (strcmp(format, "fasta") == 0)
-//  {
-//    if (readRecord(id, query, seqStream) == 0 )
-//    { 
-//      qual = ""; /* set qual default value to empty for fasta format */
-//      return 1;
-//    }
-//    return 0;
-//  }
-//  else
-//    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-//}
-//
-int cut_leading_tailing_stdin(const po::variables_map & vm, 
-                      ostream & OS_with_adaptor,
-                      ostream & OS_no_adaptor,
-                      adapt_5 & d5, adapt_3 & d3,
-                      const char * format)
-{
-  CharString id, query, qual;
-  seqan::RecordReader<std::istream, seqan::SinglePass<> > reader(std::cin);
-  if (vm.count("head") && vm.count("tail"))
-  {
-    int start_pos = vm["head"].as<int>();
-    int end_pos = vm["tail"].as<int>();
-    while(readRecord_stdin(id, query, qual, reader, format))
-    {
-      ++total;
-      if ( start_pos < length(query) - 1 && /* check at least < seq length */
-          length(query) - end_pos - start_pos > vm["length-cutoff"].as<int>())
-        /* length(query)-endpos = tobe cut position */
-      {
-        query = infix(query, start_pos, length(query) - end_pos);
-        if (qual != "")
-          qual  = infix(qual, start_pos, length(query) - end_pos);
-        d5 = FOUND_5_ADAPT;
-        d3 = FOUND_3_ADAPT;
-      }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
-    }
-  }
-  else if (vm.count("head") )
-  {
-    int start_pos = vm["head"].as<int>();
-    while(readRecord_stdin(id, query, qual, reader, format))
-    {
-      ++total;
-      if ( start_pos < length(query) - 1) /* check at least < seq length */
-      {
-        query = suffix(query, start_pos);
-        if (qual != "")
-          qual  = suffix(qual, start_pos);
-        d5 = FOUND_5_ADAPT;
-      }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
-    }
-  }
-  else if (vm.count("tail") )
-  {
-    int end_pos = vm["tail"].as<int>();
-    while(readRecord_stdin(id, query, qual, reader, format))
-    {
-      ++total;
-      if ( length(query) - end_pos > vm["length-cutoff"].as<int>() ) 
-      {
-        query = prefix(query, end_pos);
-        if (qual != "")
-          qual  = prefix(qual, end_pos);
-        d3 = FOUND_3_ADAPT;
-      }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
-    }
-  }
 
-}
-
-int cut_leading_tailing_file( string filename, 
+template <typename TStream>
+int cut_leading_tailing_stream( TStream &stream, 
                       const po::variables_map & vm, 
                       ostream & OS_with_adaptor,
                       ostream & OS_no_adaptor,
                       adapt_5 & d5, adapt_3 & d3,
                       const char * format)
 {
-  CharString id, query, qual;
-  SequenceStream seqStream(filename.c_str());
-  if (!ifstream(filename.c_str()).good())
-    errx(1, "Cannot open file: %s!", filename.c_str());
-
-//  if(!isGood(seqStream))
-//    errx(1, "cannot open file: ", filename.c_str(), " in Line: ", __LINE__);
   if (vm.count("head") && vm.count("tail"))
   {
     int start_pos = vm["head"].as<int>();
     int end_pos = vm["tail"].as<int>();
-    while(readRecord_Stream(id, query, qual, seqStream, format))
+    Seqrecord seq;
+    CharString id, query, qual;
+    while(ReadRecord(stream, seq, format))
     {
       ++total;
+      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
       if ( start_pos < length(query) - 1 && /* check at least < seq length */
           length(query) - end_pos - start_pos > vm["length-cutoff"].as<int>())
         /* length(query)-endpos = tobe cut position */
@@ -645,9 +522,12 @@ int cut_leading_tailing_file( string filename,
   else if (vm.count("head") )
   {
     int start_pos = vm["head"].as<int>();
-    while(readRecord_Stream(id, query, qual, seqStream, format))
+    Seqrecord seq;
+    CharString id, query, qual;
+    while(ReadRecord(stream, seq, format))
     {
       ++total;
+      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
       if ( start_pos < length(query) - 1) /* check at least < seq length */
       {
         query = suffix(query, start_pos);
@@ -664,9 +544,12 @@ int cut_leading_tailing_file( string filename,
   else if (vm.count("tail") )
   {
     int end_pos = vm["tail"].as<int>();
-    while(readRecord_Stream(id, query, qual, seqStream, format))
+    Seqrecord seq;
+    CharString id, query, qual;
+    while(ReadRecord(stream, seq, format))
     {
       ++total;
+      id = seq.ID; query = seq.Seq; qual = seq.Qual; 
       if ( length(query) - end_pos > vm["length-cutoff"].as<int>() ) 
       {
         query = prefix(query, end_pos);
@@ -680,7 +563,6 @@ int cut_leading_tailing_file( string filename,
         write_seq2stream(OS_no_adaptor, id, query, qual);
     }
   }
-
 }
 
 bool fileExists(const std::string& filename)
@@ -730,22 +612,21 @@ std::map<CharString, std::ostream*> GetMapOfFile2Ofstream (const po::variables_m
         errx(1, "Error: %s already in map!\n", toCString(five_adaptor));
     }
     else
-//      m[CharString("cout")] = &std::cout;
       m[five_adaptor] = &std::cout;
   }
   return m;
 }
 
 template <typename TStream>
-void read_process_5_3_fastq(TStream & stream, 
+void read_process_5_3_fastaq(TStream & stream, 
     const CharString & five_adaptor, const CharString & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
 {
   Seqrecord seq;
   CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTQ()))
+  while(ReadRecord(stream, seq, format))
   {
     ++total;
     id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -761,60 +642,15 @@ void read_process_5_3_fastq(TStream & stream,
 }
 
 template <typename TStream>
-void read_process_5_3_fasta(TStream & stream, 
+void read_process_5_fastaq(TStream & stream, 
     const CharString & five_adaptor, const CharString & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
 {
   Seqrecord seq;
   CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTA()))
-  {
-    ++total;
-    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-        case_insensitive, OS_alignment, d5, IUPAC);
-    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-        case_insensitive, OS_alignment, d3, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
-  }
-}
-template <typename TStream>
-void read_process_5_fastq(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
-    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
-    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
-{
-  Seqrecord seq;
-  CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTQ()))
-  {
-    ++total;
-    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-        case_insensitive, OS_alignment, d5, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
-  }
-}
-
-template <typename TStream>
-void read_process_5_fasta(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
-    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
-    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
-{
-  Seqrecord seq;
-  CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTA()))
+  while(ReadRecord(stream, seq, format))
   {
     ++total;
     id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -829,37 +665,15 @@ void read_process_5_fasta(TStream & stream,
 
 
 template <typename TStream>
-void read_process_3_fastq(TStream & stream, 
+void read_process_3_fastaq(TStream & stream, 
     const CharString & five_adaptor, const CharString & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
+    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
 {
   Seqrecord seq;
   CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTQ()))
-  {
-    ++total;
-    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-        case_insensitive, OS_alignment, d3, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
-  }
-}
-
-template <typename TStream>
-void read_process_3_fasta(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
-    int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
-    bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
-    ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC)
-{
-  Seqrecord seq;
-  CharString id, query, qual;
-  while(ReadRecord(stream, seq, FASTA()))
+  while(ReadRecord(stream, seq, format))
   {
     ++total;
     id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -874,7 +688,9 @@ void read_process_3_fasta(TStream & stream,
 
 /* This is the main interface that process sequences from STDIN
  */
-void TrimmingSeq_from_stdin( const po::variables_map & vm, 
+template <typename TStream>
+void TrimmingSeq_from_stream( TStream & stream,
+                             const po::variables_map & vm, 
                              const bool & case_insensitive,
                              adapt_5 & d5, adapt_3 & d3, 
                              ostream & OS_alignment, 
@@ -888,16 +704,12 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
 
   if (vm.count("out_no_adaptor") )
   {
-    out1.open(vm["out_no_adaptor"].as<string>().c_str());
+    std::string filename = vm["out_no_adaptor"].as<string>();
+    out1.open(filename.c_str());
     if (!out1.is_open())
-    {
-      errx(1, "Error in open file %s" , __FILE__, __LINE__);
-    }
-
+      errx(1, "Error in open file %s", filename.c_str());
   }
   std::ostream & OS_no_adaptor = vm.count("out_no_adaptor") ? out1 : std::cout;
-
-
 
   if (vm["five"].as<std::vector<std::string> >().size() <= 1) /* using default OS_with_adaptor */
   {
@@ -923,27 +735,27 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
     Seqrecord seq;
     if (inspect_5 && inspect_3)
     {
-      read_process_5_3_fastq(std::cin, five_adaptor, three_adaptor, 
+      read_process_5_3_fastaq(stream, five_adaptor, three_adaptor, 
                               five_allowed_mismatch_indel, 
                               three_allowed_mismatch_indel, 
                               case_insensitive, OS_alignment, 
-                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC, format);
     }
     else if (inspect_5)
     {
-      read_process_5_fastq(std::cin, five_adaptor, three_adaptor, 
+      read_process_5_fastaq(stream, five_adaptor, three_adaptor, 
                               five_allowed_mismatch_indel, 
                               three_allowed_mismatch_indel, 
                               case_insensitive, OS_alignment, 
-                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC, format);
     }
     else if (inspect_3)
     {
-      read_process_3_fastq(std::cin, five_adaptor, three_adaptor, 
+      read_process_3_fastaq(stream, five_adaptor, three_adaptor, 
                               five_allowed_mismatch_indel, 
                               three_allowed_mismatch_indel, 
                               case_insensitive, OS_alignment, 
-                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC);
+                              OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC, format);
 
     }
     else
@@ -958,7 +770,7 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
     {
       Seqrecord seq;
       CharString id, query, qual;
-      while(ReadRecord(std::in, seq, FASTQ()))
+      while(ReadRecord(stream, seq, format))
       {
         ++total;
         id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -991,7 +803,7 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
     {
       Seqrecord seq;
       CharString id, query, qual;
-      while(ReadRecord(std::in, seq, FASTQ()))
+      while(ReadRecord(stream, seq, format))
       {
         ++total;
         id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -1026,7 +838,7 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
 
       Seqrecord seq;
       CharString id, query, qual;
-      while(ReadRecord(std::in, seq, FASTQ()))
+      while(ReadRecord(stream, seq, format))
       {
         ++total;
         id = seq.ID; query = seq.Seq; qual = seq.Qual;  
@@ -1050,334 +862,6 @@ void TrimmingSeq_from_stdin( const po::variables_map & vm,
 
 }
 
-/* This is the main interface that process sequences from file
- */
-void TrimmingSeq_from_file( string filename,
-                             const po::variables_map & vm, 
-                             const bool & case_insensitive,
-                             adapt_5 & d5, adapt_3 & d3, 
-                             ostream & OS_alignment, 
-                             bool inspect_5,
-                             bool inspect_3,
-                             const char * format)
-{
-  bool IUPAC = vm.count("IUPAC") ? true : false; 
-
-  ofstream out1;
-  ofstream out;
-
-  if (vm.count("out_no_adaptor") )
-  {
-    out1.open(vm["out_no_adaptor"].as<string>().c_str());
-    if (!out1.is_open())
-    {
-      errx(1, "Error in open file %s" , __FILE__, __LINE__);
-    }
-
-  }
-  std::ostream & OS_no_adaptor = vm.count("out_no_adaptor") ? out1 : std::cout;
-
-  if (vm["five"].as<std::vector<std::string> >().size() <= 1) /* using default OS_with_adaptor */
-  {
-    CharString five_adaptor = vm.count("five") ? vm["five"].as<std::vector<std::string> >()[0] : "";
-    CharString three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
-
-    if (vm.count("out_with_adaptor"))
-    {
-      out.open(vm["out_with_adaptor"].as<string>().c_str());
-      if (!out.is_open())
-        errx(1, "Error in open file %s" , __FILE__, __LINE__);
-    }
-    std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
-
-    if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
-    {                                             /* after translation will be like */
-      five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
-      three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
-    }
-    int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-    int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-    CharString id, query, qual;
-    SequenceStream seqStream(filename.c_str());
-    if (!ifstream(filename.c_str()).good())
-      errx(1, "Cannot open file: %s!", filename.c_str());
-
-    if (strcmp(format, "fastq") == 0)
-    {
-      if (inspect_5 && inspect_3)
-      {
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-              case_insensitive, OS_alignment, d5, IUPAC);
-          examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-      }
-      else if (inspect_5)
-      {
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-              case_insensitive, OS_alignment, d5, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-      }
-      else if (inspect_3)
-      {
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-      }
-    }
-    else if (strcmp(format, "fasta") == 0)
-    {
-  /* empty is made up on purpose to escape the const  
-   * requirement for qual position 
-   * */
-      CharString empty = ""; 
-      if (inspect_5 && inspect_3)
-      {
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          examine_5(id, query, empty, five_adaptor, five_allowed_mismatch_indel, "five", 
-              case_insensitive, OS_alignment, d5, IUPAC);
-          examine_3(id, query, empty, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-      }
-      else if (inspect_5)
-      {
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          examine_5(id, query, empty, five_adaptor, five_allowed_mismatch_indel, "five", 
-              case_insensitive, OS_alignment, d5, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-      }
-      else if (inspect_3)
-      {
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          examine_3(id, query, empty, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-      }
-    }
-
-  } 
-  else
-  {
-    CharString three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
-    std::map<CharString, std::ostream*> m = GetMapOfFile2Ofstream(vm, format); 
-    CharString id, query, qual;
-    SequenceStream seqStream(filename.c_str());
-    if (!ifstream(filename.c_str()).good())
-      errx(1, "Cannot open file: %s!", filename.c_str());
-    
-    if (strcmp(format, "fastq") == 0)
-    {
-      if (inspect_5 && inspect_3)
-      {
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          CharString five_adaptor;
-          for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
-          {
-            five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
-            if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
-              five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
-            int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-            examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-                case_insensitive, OS_alignment, d5, IUPAC);
-            if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
-              break;
-          }
-          if (IUPAC)                              /* need to check 3' adaptor */
-            three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
-          int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-          examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-
-          std::ostream & OS_with_adaptor = *m[five_adaptor];/* overwrites default OS_with_adaptor */
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-      }
-      else if (inspect_5)
-      {
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          CharString five_adaptor; 
-          for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
-          {
-            five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
-            if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
-              five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
-            int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-            examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
-                case_insensitive, OS_alignment, d5, IUPAC);
-            if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
-              break;
-          }
-          std::ostream & OS_with_adaptor = *m[five_adaptor];/* overwrites default OS_with_adaptor */
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-
-      }
-      else if (inspect_3)
-      {
-        if (vm.count("out_with_adaptor"))
-        {
-          out.open(vm["out_with_adaptor"].as<string>().c_str());
-          if (!out.is_open())
-            errx(1, "Error in open file %s" , __FILE__, __LINE__);
-        }
-        std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
-
-        while(readRecord(id, query, qual, seqStream) == 0)
-        {
-          ++total;
-          if (IUPAC)                              /* need to check 3' adaptor */
-            three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
-          int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-          examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, qual); /* using default OS_with_adaptor */
-          else
-            write_seq2stream(OS_no_adaptor, id, query, qual);
-        }
-      }
-    }
-    else if (strcmp(format, "fasta") == 0)
-    {
-      CharString empty = ""; 
-      if (inspect_5 && inspect_3)
-      {
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          CharString five_adaptor;
-          for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
-          {
-            five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
-            if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
-              five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
-            int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-            examine_5(id, query, empty, five_adaptor, five_allowed_mismatch_indel, "five", 
-                case_insensitive, OS_alignment, d5, IUPAC);
-            if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
-              break;
-          }
-          if (IUPAC)                              /* need to check 3' adaptor */
-            three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
-          int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-          examine_3(id, query, empty, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-
-          std::ostream & OS_with_adaptor = *m[five_adaptor];/* overwrites default OS_with_adaptor */
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-      }
-      else if (inspect_5)
-      {
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          CharString five_adaptor; 
-          for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
-          {
-            five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
-            if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
-              five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
-            int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-            examine_5(id, query, empty, five_adaptor, five_allowed_mismatch_indel, "five", 
-                case_insensitive, OS_alignment, d5, IUPAC);
-            if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
-              break;
-          }
-          std::ostream & OS_with_adaptor = *m[five_adaptor];/* overwrites default OS_with_adaptor */
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty);
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-
-      }
-      else if (inspect_3)
-      {
-        if (vm.count("out_with_adaptor"))
-        {
-          out.open(vm["out_with_adaptor"].as<string>().c_str());
-          if (!out.is_open())
-            errx(1, "Error in open file %s" , __FILE__, __LINE__);
-        }
-        std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
-
-        while(readRecord(id, query, seqStream) == 0)
-        {
-          ++total;
-          if (IUPAC)                              /* need to check 3' adaptor */
-            three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
-          int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-          examine_3(id, query, empty, three_adaptor, three_allowed_mismatch_indel, "three", 
-              case_insensitive, OS_alignment, d3, IUPAC);
-          if (judge_adaptor(d5,d3))
-            write_seq2stream(OS_with_adaptor, id, query, empty); /* using default OS_with_adaptor */
-          else
-            write_seq2stream(OS_no_adaptor, id, query, empty);
-        }
-      }
-    }
-    if (vm.count("out_with_adaptor")) 
-    {
-      for(typeof(m.begin()) it = m.begin(); it != m.end(); ++it) /* clean up the map */
-        delete it->second;
-    }
-
-  }
-}
 
 int main (int argc, char * argv[])
 {
@@ -1524,7 +1008,7 @@ int main (int argc, char * argv[])
     {
       if (!isatty(fileno(stdin)))
       {
-        cut_leading_tailing_stdin(vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
+        cut_leading_tailing_stream(std::cin, vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
                                   vm["format"].as<string>().c_str());
         return 0;
       }
@@ -1540,7 +1024,10 @@ int main (int argc, char * argv[])
       for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
       {
         filename = vm["input"].as<vector<string> >()[i]; 
-        cut_leading_tailing_file(filename, vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
+        ifstream stream(filename.c_str());
+        if (!stream.good())
+          errx(1, "cannot open file %s for read", filename.c_str());
+        cut_leading_tailing_stream(stream, vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
                                  vm["format"].as<string>().c_str());
       }
       return 0;
@@ -1564,7 +1051,7 @@ int main (int argc, char * argv[])
     {
       if (!isatty(fileno(stdin)))
       {
-        TrimmingSeq_from_stdin(vm, case_insensitive, d5, d3, OS_alignment,
+        TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
                                vm["format"].as<string>().c_str());
       }
@@ -1581,7 +1068,10 @@ int main (int argc, char * argv[])
       for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
       {
         filename = vm["input"].as<vector<string> >()[i]; 
-        TrimmingSeq_from_file(filename,vm, case_insensitive, d5, d3, OS_alignment,
+        ifstream stream(filename.c_str());
+        if (!stream.good())
+          errx(1, "cannot open file %s for read", filename.c_str());
+        TrimmingSeq_from_stream(stream, vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
                               vm["format"].as<string>().c_str());
       }
@@ -1598,7 +1088,7 @@ int main (int argc, char * argv[])
       vm["input"].as<vector<string> >()[0] == string("stdin") )
     {
       if (!isatty(fileno(stdin)))
-        TrimmingSeq_from_stdin(vm, case_insensitive, d5, d3, OS_alignment,
+        TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
                                vm["format"].as<string>().c_str());
       else
@@ -1610,7 +1100,10 @@ int main (int argc, char * argv[])
       for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
       {
         filename = vm["input"].as<vector<string> >()[i]; 
-        TrimmingSeq_from_file(filename,vm, case_insensitive, d5, d3, OS_alignment,
+        ifstream stream(filename.c_str());
+        if (!stream.good())
+          errx(1, "cannot open file %s for read", filename.c_str());
+        TrimmingSeq_from_stream(stream,vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
                               vm["format"].as<string>().c_str());
       }
@@ -1626,7 +1119,7 @@ int main (int argc, char * argv[])
       vm["input"].as<vector<string> >()[0] == string("stdin") )
     {
       if (!isatty(fileno(stdin)))
-         TrimmingSeq_from_stdin(vm, case_insensitive, d5, d3, OS_alignment,
+         TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
                                vm["format"].as<string>().c_str());
       else
@@ -1638,7 +1131,10 @@ int main (int argc, char * argv[])
       for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
       {
         filename = vm["input"].as<vector<string> >()[i]; 
-        TrimmingSeq_from_file(filename,vm, case_insensitive, d5, d3, OS_alignment,
+        ifstream stream(filename.c_str());
+        if (!stream.good())
+          errx(1, "cannot open file %s for read", filename.c_str());
+        TrimmingSeq_from_stream(stream,vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
                               vm["format"].as<string>().c_str());
       }
