@@ -78,13 +78,13 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
         
         time ./Adaptor_trimmer data/FS2.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -U
         
-        real 0m0.216s
+        user 0m0.028s
 
   * dynamic programming mode 
         
         time ./Adaptor_trimmer data/FS2.fastq -I -5 TGGAGGGCAAGTCTGGTG  -o with_5_adaptor -n no_5_adaptor  -f fastq -l 0
         
-        real 0m3.347s
+        user 0m0.577s
 
   * CONCLUSION: if you want to use the exact match anyway, then I recommend you using the IUPAC mode because it's 10 times 
     faster than the dynamic program way.

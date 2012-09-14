@@ -22,7 +22,8 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <err.h>
-#include "tools.h"
+#include "readRecord.h"
+//#include "tools.h"
 #define PROG_NAME "Guess_fastq_format"
 using namespace std;
 using namespace seqan;
@@ -44,55 +45,39 @@ bool guess_format_solexa_illumina(const string & qual)
   return boost::regex_search(qual.begin(), qual.end(), what, solexa_illumina_expr);
 }
 
-/* below is like a generator function in python, which will read one record
- * per time*/
-int readRecord_stdin(CharString & id, CharString & query, CharString & qual, 
-                  seqan::RecordReader<std::istream, seqan::SinglePass<> > & reader,
-                  const char * format)
+template <typename TStream>
+string guess_format(TStream & stream)
 {
-  if (strcmp(format, "fastq") == 0)
+  Seqrecord seq;
+  std::string format = "";
+  while(ReadRecord(stream, seq, FASTQ()))
   {
-    if(readRecord(id, query, qual, reader, Fastq()) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, reader, Fasta()) == 0)
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
+    if (seq.Qual == "")
+      errx(1, "Input file is not a valid fastq file: %s has empty qual str", seq.Seq.c_str());
+    if (guess_format_sanger(string(seq.Qual.c_str())))
+    {
+      format = "fastq_sanger";
+      break;
     }
-    return 0;
-  }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
-/* below is like a generator function in python, which will read one record
- * per time*/
-int readRecord_Stream(CharString & id, CharString & query, CharString & qual, 
-                  seqan::SequenceStream & seqStream,
-                  const char * format)
-{
-  if (strcmp(format, "fastq") == 0)
-  {
-    if(readRecord(id, query, qual, seqStream) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, seqStream) == 0 )
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
+    if (guess_format_solexa_illumina(string(seq.Qual.c_str())))
+    {
+      format = "fastq_solexa_illumina";
+      break;
     }
-    return 0;
   }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
 
+  if(format != string(""))
+    cerr << "format is: " << format << endl;
+  else
+  {
+    cerr << "We are unable to determine it's format. " << endl
+      << "Its highly possible the input sequences is in fastq-sanger"
+      << " format with quality score very high range from 26-40." 
+      << "we will go ahead use this fastq-sanger format"<< endl;
+    format =  "fastq-sanger";
+  }
+  return format;
+}
 
 int main (int argc, char * argv[])
 {
@@ -113,9 +98,10 @@ int main (int argc, char * argv[])
     ("format,f", po::value<string>(), 
      "the format of input file, valid formats include fastq-sanger and fastq-illumina "
      "fastq-solexa")
-    ("sample,s", po::value<int>()->default_value(1000, "1000"), 
-     "Number of sequence records"
-     "used for guess format");
+//    ("sample,s", po::value<int>()->default_value(1000, "1000"), 
+//     "Number of sequence records"
+//     "used for guess format")
+    ;
   po::positional_options_description p;
   p.add("input", -1);
   po::variables_map vm;
@@ -140,48 +126,15 @@ int main (int argc, char * argv[])
     exit(1);
   }
 // check whether format specified is valid or not
-  CharString id, query, qual;
   string format = "";
   int count = 0;
   if (vm["input"].as<vector<string> >().size() == 1 &&
       vm["input"].as<vector<string> >()[0] == string("stdin") )
   {
     if (!isatty(fileno(stdin)))
-    {
-      seqan::RecordReader<std::istream, seqan::SinglePass<> > reader(std::cin);
-      while(readRecord_stdin(id, query, qual, reader, "fastq") && 
-          count++ < vm["sample"].as<int>() )
-      {
-        if (qual == "")
-          errx(1, "Input file is not a valid fastq file");
-        if (guess_format_sanger(string(toCString(qual))))
-        {
-          format = "fastq_sanger";
-          break;
-        }
-        if (guess_format_solexa_illumina(string(toCString(qual))))
-        {
-          format = "fastq_solexa_illumina";
-          break;
-        }
-      }
-      if(format != string(""))
-        cerr << "format is: " << format << endl;
-      else
-      {
-        cerr << "We are unable to determine it's format based on "
-          << vm["sample"].as<int>() << " sequences." << endl
-          << "Its highly possible the input sequences is in fastq-sanger"
-          << " format with quality score very high range from 26-40." 
-          << "we will go ahead use this fastq-sanger format"<< endl;
-        format =  "fastq-sanger";
-      }
-    }
+      guess_format(std::cin);
     else
-    {
-      cerr << "The program is hanging and waiting for input from STDIN" << endl;
-      exit(1);
-    }
+      errx(1, "The program is hanging and waiting for input from STDIN");
   }
   else
   {
@@ -189,34 +142,10 @@ int main (int argc, char * argv[])
     for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
     {
       filename = vm["input"].as<vector<string> >()[i]; 
-      SequenceStream seqStream(filename.c_str());
-      while(readRecord_Stream(id, query, qual, seqStream, "fastq") && 
-          count++ < vm["sample"].as<int>() )
-      {
-        if (qual == "")
-          errx(1, "Input file is not a valid fastq file");
-        if (guess_format_sanger(string(toCString(qual))))
-        {
-          format = "fastq_sanger";
-          break;
-        }
-        if (guess_format_solexa_illumina(string(toCString(qual))))
-        {
-          format = "fastq_solexa_illumina";
-          break;
-        }
-      }
-      if(format != string(""))
-        cerr << "format is: " << format << endl;
-      else
-      {
-        cerr << "We are unable to determine it's format based on "
-          << vm["sample"].as<int>() << " sequences." << endl
-          << "Its highly possible the input sequences is in fastq-sanger"
-          << " format with quality score very high ranging from 26 to 40." 
-          << "We will go ahead use fastq-sanger as its format"<< endl;
-        format =  "fastq-sanger";
-      }
+      ifstream stream(filename.c_str());
+      if (!stream.good())
+        errx(1, "cannot open file %s for read", filename.c_str());
+      guess_format(stream);
     }
   }
   return 0;

@@ -10,8 +10,8 @@ DEBUG_FLAGS = -O0 -g3
 RELEASE_FLAGS = -O3 
 NOASSERT_FLAGS = -DNDEBUG
 
-CXXFLAGS = $(RELEASE_FLAGS) $(INC)
-#CXXFLAGS = -ggdb $(INC)
+#CXXFLAGS = $(RELEASE_FLAGS) $(INC)
+CXXFLAGS = -ggdb $(INC)
 DEBUG_CXXFLAGS = -ggdb $(INC)
 FIND :=$(shell which find)
 # default link with mac libraries

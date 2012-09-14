@@ -24,7 +24,8 @@
 #include <fstream>
 #include <iomanip>
 #include <time.h>
-
+#include <err.h>
+#include "seq.h"
 class FASTA {};
 class FASTQ {};
 
@@ -125,6 +126,39 @@ int ReadRecord(TStream &stream, Seqrecord & seq,
     seq.Qual = ""; /* set qual default value to empty for fasta format */
     return ReadRecord(stream, seq, FASTA());   /* 1 indicates read record success; 0 for fail */
   }
+  else
+    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
+}
+
+/* write FASTA without line wrapping
+ */
+template <typename TStream>
+void WriteRecord (TStream &stream, const Seqrecord & seqobj, const FASTA &)
+{
+        stream << '>' << seqobj.ID << std::endl
+          << seqobj.Seq << std::endl;
+}
+
+/* write FASTQ without line wrapping
+ */
+template <typename TStream>
+void WriteRecord (TStream &stream, const Seqrecord & seqobj, const FASTQ &)
+{
+    stream << '@' << seqobj.ID << std::endl
+    << seqobj.Seq << std::endl
+    << '+' << std::endl 
+    << seqobj.Qual << std::endl; 
+}
+
+/* Wrapper for FASTA/Q without line wrapping
+ */
+template <typename TStream>
+void WriteRecord (TStream &stream, const Seqrecord & seqobj, const char * format)
+{
+  if(strcmp(format, "fasta") == 0)
+    WriteRecord(stream, seqobj, FASTA());
+  else if(strcmp(format, "fastq") == 0)
+    WriteRecord(stream, seqobj, FASTQ());
   else
     errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
 }

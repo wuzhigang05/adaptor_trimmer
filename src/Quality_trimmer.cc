@@ -28,11 +28,13 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <algorithm>
+#include <fstream>
 #include <map>
 #include <numeric>
 #include <typeinfo>
 #include "tools.h"
 #include <err.h>
+#include "readRecord.h"
 #define all(c) c.begin(), c.end()
 #define P(v) cerr << #v << v << endl;
 #define tr(container, it) for (typeof(container.begin()) it = container.begin(); it != container.end(); it++)
@@ -61,56 +63,9 @@ bool guess_format_solexa_illumina(const string & qual)
 
 /* below is like a generator function in python, which will read one record
  * per time*/
-int readRecord_stdin(CharString & id, CharString & query, CharString & qual, 
-                  seqan::RecordReader<std::istream, seqan::SinglePass<> > & reader,
-                  const char * format)
-{
-  if (strcmp(format, "fastq") == 0)
-  {
-    if(readRecord(id, query, qual, reader, Fastq()) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, reader, Fasta()) == 0)
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
-    }
-    return 0;
-  }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
-/* below is like a generator function in python, which will read one record
- * per time*/
-int readRecord_Stream(CharString & id, CharString & query, CharString & qual, 
-                  seqan::SequenceStream & seqStream,
-                  const char * format)
-{
-  if (strcmp(format, "fastq") == 0)
-  {
-    if(readRecord(id, query, qual, seqStream) == 0)
-      return 1;                                 /* indicates read record success */
-    return 0;
-  }
-  else if (strcmp(format, "fasta") == 0)
-  {
-    if (readRecord(id, query, seqStream) == 0 )
-    { 
-      qual = ""; /* set qual default value to empty for fasta format */
-      return 1;
-    }
-    return 0;
-  }
-  else
-    errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
-}
 
 pair<vector<int>::iterator, vector<int>::iterator> find_maximum_subarray( vector<int> & c )
 {
-
   typedef vector<int>::iterator Tci;
   Tci start_previous = c.begin();               /* used to hold the to be returned start iterator */
   Tci start = c.begin();
@@ -149,14 +104,83 @@ vector<int> get_quality_array(const CharString & qual)
   return v;
 }
 
-//ofstream tie_file2ostream(string filename)
-//{
-//  ofstream out;
-//  out.open(filename.c_str());
-//  if (!out.is_open())
-//    errx(1, "Error in open file %s" , __FILE__, __LINE__);
-//  return out;
-//}
+template <typename TStream>
+string guess_format(TStream & stream)
+{
+  Seqrecord seq;
+  std::string format = "";
+  while(ReadRecord(stream, seq, FASTQ()))
+  {
+    if (seq.Qual == "")
+      errx(1, "Input file is not a valid fastq file: %s has empty qual str", seq.Seq.c_str());
+    if (guess_format_sanger(string(seq.Qual.c_str())))
+    {
+      format = "fastq_sanger";
+      break;
+    }
+    if (guess_format_solexa_illumina(string(seq.Qual.c_str())))
+    {
+      format = "fastq_solexa_illumina";
+      break;
+    }
+  }
+
+  if(format != string(""))
+    cerr << "format is: " << format << endl;
+  else
+  {
+    cerr << "We are unable to determine it's format. " << endl
+      << "Its highly possible the input sequences is in fastq-sanger"
+      << " format with quality score very high range from 26-40." 
+      << "we will go ahead use this fastq-sanger format"<< endl;
+    format =  "fastq_sanger";
+  }
+  return format;
+}
+
+template <typename TStream>
+void process(TStream & stream, const po::variables_map & vm, std::string & format, 
+              ostream & OS_long, ostream & OS_short, vector<int> & stat)
+{
+// setup the offset
+  int offset = 0;
+  if (format == string("fastq_sanger"))
+     offset = 33;
+  else
+     offset = 64;
+  vector<int> vi;
+  vector<int> vi_offset_negated;
+  pair<vector<int>::iterator, vector<int>::iterator> tmp;
+  int clip_start;
+  int clip_end;
+  int length;
+
+  Seqrecord seq;
+
+  while(ReadRecord(stream, seq, FASTQ()))
+  {
+    if (seq.Qual == "")
+      errx(1, "Input file is not a valid fastq file: %s has empty qual str", seq.ID.c_str());
+    vi = get_quality_array(seq.Qual);
+    tr(vi, it)                              /* for each value negate the offset */
+      *it = *it - offset;
+    tr(vi, it)                              /* prepare the 1 and -1 array */
+      *it = *it >= vm["cutoff"].as<int>() ? 1 : -1;
+    tmp = find_maximum_subarray(vi);
+    clip_start = tmp.first-vi.begin();
+    clip_end = tmp.second-vi.begin();
+    length = clip_end - clip_start;
+    seq.Qual = seq.Qual.substr(clip_start, clip_end - clip_start);
+    seq.Seq = seq.Seq.substr(clip_start, clip_end - clip_start);
+    stat.push_back(length);
+    if (length >= vm["length"].as<int>())
+      WriteRecord(OS_long, seq, FASTQ());
+    else
+      WriteRecord(OS_short, seq, FASTQ());
+  }
+}
+
+
 int main (int argc, char * argv[])
 {
   po::options_description desc(
@@ -176,12 +200,12 @@ int main (int argc, char * argv[])
                                                             "STDIN"), 
      "input file(s), has to be in fastq format")
     ("format,f", po::value<string>(), 
-     "the format of input file, valid formats include fastq-sanger and fastq-illumina "
-     "fastq-solexa")
+     "the format of input file, valid formats include fastq_sanger and fastq_illumina "
+     "fastq_solexa")
     ("length,l", po::value<int>()->default_value(0, "0"), 
      "length >= specifed value will be output")
-    ("output-long,o", po::value<string>(), "output file. default [STDOUT]")
-    ("output-short,s", po::value<string>(), "output file below the length cutoff. "
+    ("output_long,o", po::value<string>(), "output file. default [STDOUT]")
+    ("output_short,s", po::value<string>(), "output file below the length cutoff. "
      "default [STDOUT]")
     ("cutoff,c", po::value<int>()->default_value(20, "20"), 
      "the quality cutoff. Each position of the trimmed reads will have a quality score "
@@ -212,15 +236,15 @@ int main (int argc, char * argv[])
     exit(1);
   }
 // check whether format specified is valid or not
-  if (vm.count("format"))
-  {
-    string format = vm["format"].as<string>();
-    if (!(format == string("fastq-sanger") || format == string("fastq-illumina") || 
-          format == string("fastq-solexa")))
-      errx(1, "in-valid format specified");
-  }
-  else
-    errx(1, "you have to specify the format for the input fastq file");
+//  if (vm.count("format"))
+//  {
+//    string format = vm["format"].as<string>();
+//    if (!(format == string("fastq-sanger") || format == string("fastq-illumina") || 
+//          format == string("fastq-solexa")))
+//      errx(1, "in-valid format specified");
+//  }
+//  else
+//    errx(1, "you have to specify the format for the input fastq file");
 
 
 // setup output stream                                                
@@ -245,47 +269,22 @@ int main (int argc, char * argv[])
   std::ostream & OS_long = vm.count("output_long") ? out : std::cout;
   std::ostream & OS_short = vm.count("output_short") ? out_short: std::cout;
 
-// setup the offset
-  int offset = (vm["format"].as<string>() == string("fastq-sanger") ) ? 33 : 64;
-
+  std::vector<int> stat;
 // start processing
-  vector<int> vi;
-  vector<int> vi_offset_negated;
-  pair<vector<int>::iterator, vector<int>::iterator> tmp;
-  int clip_start;
-  int clip_end;
-  int length;
-  CharString id, query, qual;
-  vector<int> stat;
   /* from stdin */
   if (vm["input"].as<vector<string> >().size() == 1 &&
       vm["input"].as<vector<string> >()[0] == string("stdin") )
   {
     if (!isatty(fileno(stdin)))
-    {
-      seqan::RecordReader<std::istream, seqan::SinglePass<> > reader(std::cin);
-      while(readRecord_stdin(id, query, qual, reader, "fastq"))
+      if (vm.count("format"))
       {
-        if (qual == "")
-          errx(1, "Input file is not a valid fastq file");
-        vi = get_quality_array(qual);
-        tr(vi, it)                              /* for each value negate the offset */
-          *it = *it - offset;
-        tr(vi, it)                              /* prepare the 1 and -1 array */
-          *it = *it >= vm["cutoff"].as<int>() ? 1 : -1;
-        tmp = find_maximum_subarray(vi);
-        clip_start = tmp.first-vi.begin();
-        clip_end = tmp.second-vi.begin();
-        length = clip_end - clip_start;
-        qual = infix(qual, clip_start, clip_end);
-        query = infix(query, clip_start, clip_end);
-        stat.push_back(length);
-        if (length >= vm["length"].as<int>())
-          writeRecord(OS_long, id, query, qual, Fastq());
-        else
-          writeRecord(OS_short, id, query, qual, Fastq());
+        std::string format = vm["format"].as<std::string>();
+        process(std::cin, vm, format, OS_long, OS_short, stat);
       }
-    }
+      else
+        errx(1, "You have to specify format if you take input from STDIN");
+    else
+      errx(1, "The program is hanging and waiting for input from STDIN");
   }
   else
   {
@@ -293,28 +292,23 @@ int main (int argc, char * argv[])
     for (int i = 0; i < vm["input"].as<vector<string> >().size(); ++i)
     {
       filename = vm["input"].as<vector<string> >()[i]; 
-      SequenceStream seqStream(filename.c_str());
-      while(readRecord_Stream(id, query, qual, seqStream, "fastq") )
+      ifstream stream;
+      stream.open(filename.c_str());
+      if (!stream.good())
+        errx(1, "cannot open file %s for read", filename.c_str());
+
+      std::string format;
+      if (!vm.count("format"))
       {
-        if (qual == "")
-          errx(1, "Input file is not a valid fastq file");
-        vi = get_quality_array(qual);
-        tr(vi, it)                              /* for each value negate the offset */
-          *it = *it - offset;
-        tr(vi, it)                              /* prepare the 1 and -1 array */
-          *it = *it >= vm["cutoff"].as<int>() ? 1 : -1;
-        tmp = find_maximum_subarray(vi);
-        clip_start = tmp.first-vi.begin();
-        clip_end = tmp.second-vi.begin();
-        length = clip_end - clip_start;
-        qual = infix(qual, clip_start, clip_end);
-        query = infix(query, clip_start, clip_end);
-        stat.push_back(length);
-        if (length >= vm["length"].as<int>())
-          writeRecord(OS_long, id, query, qual, Fastq());
-        else
-          writeRecord(OS_short, id, query, qual, Fastq());
+        format = guess_format(stream);
+        stream.close();
+        stream.open(filename.c_str());
       }
+      else
+        format = vm["format"].as<std::string>();
+      if (!stream.good())
+        errx(1, "cannot open file %s for read", filename.c_str());
+      process(stream, vm, format, OS_long, OS_short, stat);
     }
   }
   cerr << "mean length is:   " << mean<int>(stat) << endl;

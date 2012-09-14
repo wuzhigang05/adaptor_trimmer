@@ -156,54 +156,57 @@ vector<int> get_regex_match_StartEnd(const string & str,
   return v;
 }
 
-int regEx_match(CharString & id, CharString & query, CharString & qual, const CharString & db, 
+//int regEx_match(CharString & id, CharString & query, CharString & qual, const CharString & db, 
+int regEx_match(Seqrecord & seq, const string & db, 
                 int mismatch, const string & direction, bool CaseInSensitive, 
                 ostream & os_align)
 {
-  vector <int> start_end_pos = get_regex_match_StartEnd((string) toCString(query), 
-                                                        (string) toCString(db), 
-                                                          CaseInSensitive );
+  vector <int> start_end_pos = get_regex_match_StartEnd(seq.Seq, 
+                                                        db, 
+                                                        CaseInSensitive );
   if( start_end_pos.size() == 0)
     return 0;
   else
   {
     int start_pos = start_end_pos[0];
     int end_pos = start_end_pos[1];
-    CharString match_str = infix(query, start_pos, end_pos);
+//    std::string match_str = infix(seq.Seq, start_pos, end_pos);
+    std::string match_str = seq.Seq.substr(start_pos, end_pos - start_pos);
     if (direction == string("five")) 
     {
-      os_align << ">" << id << "_five" << endl;
+      os_align << ">" << seq.ID << "_five" << endl;
       os_align << "Distance from Seq head to 5' adaptor end is: " << end_pos << endl;
       os_align << match_str << endl;
 
-      query = suffix(query, end_pos);
-      if (qual !=  "")        /* if qual == "" means this is fasta sequence */
-        qual = suffix(qual, end_pos);
+//      query = suffix(query, end_pos);
+      seq.Seq = seq.Seq.substr(end_pos);
+      if (seq.Qual !=  "")        /* if seq.Qual == "" means this is fasta sequence */
+//        seq.Qual = suffix(seq.Qual, end_pos);
+        seq.Qual = seq.Qual.substr(end_pos);
       return 1;
     }
     else if (direction == string("three"))
     {
-      os_align << ">" << id << "_three" << endl;
+      os_align << ">" << seq.ID << "_three" << endl;
       os_align << "Distance from Seq tail to 3' adaptor start is: " 
-        << length(query) - start_pos << endl;
+        << length(seq.Seq) - start_pos << endl;
       os_align << match_str << endl;
 
-      query = prefix(query, start_pos); 
-      if (qual != "")        /* if qual == "" means this is fasta sequence */
-        qual = prefix(qual, start_pos);
+//      query = prefix(query, start_pos); 
+      seq.Seq = seq.Seq.substr(0, start_pos); 
+      if (seq.Qual != "")        /* if seq.Qual == "" means this is fasta sequence */
+//        qual = prefix(qual, start_pos);
+        seq.Qual = seq.Qual.substr(0, start_pos); 
       return 1;
     }
     else
-    {
-      cerr << "invalid format in: " << __FILE__ 
-        << " line: " << __LINE__ << endl;
-      exit(1);
-    }
+      errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
   }
 
 }
 
-int do_alignment(CharString & id, CharString & query, CharString & qual, const CharString & db, 
+//int do_alignment(CharString & id, CharString & query, CharString & qual, const CharString & db, 
+int do_alignment(Seqrecord & seq, const string & db, 
                   int mismatch, const string & direction, bool CaseInSensitive, 
                   ostream & os_align)
 /*   note if direction == five, then db has to be the five prime adaptor sequence,
@@ -216,9 +219,10 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
    *  This seems cubersome. But We are doing this in order to overcome
    *  the side effect of toUpper function, which modifies the string in
    *  place rather than return a copy of original string*/
-  CharString query_uppercase = query;
-  CharString db_uppercase = db;
-  const char * tmp = toCString(id);
+//  string query_uppercase = query;
+  string query_uppercase = seq.Seq;
+  string db_uppercase = db;
+
   if (CaseInSensitive)
   {
     toUpper(query_uppercase);
@@ -238,7 +242,8 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
     unsigned d_end =clippedEndPosition(row(Ali, 1)); 
     int d_gaps = num_of_gaps(Ali, 1);
     int gaps = num_of_gaps(Ali, 0);
-    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + length(db) - d_end + d_gaps; /* inclusive */
+//    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + length(db) - d_end + d_gaps; /* inclusive */
+    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + db.length() - d_end + d_gaps; /* inclusive */
     //                                                          ------------------------------
     //                                                          if the best alignment does not extend to the end of adaptor then add these up
     //                              below is the case
@@ -251,42 +256,40 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
     //     Full Adaptor:      TGGAGGGCAAGTCTGGTG                                               
     if (direction == string("five")) 
     {
-      os_align << ">" << id << "_five" << endl;
+      os_align << ">" << seq.ID << "_five" << endl;
+      os_align << ">" << seq.ID << "_five" << endl;
       os_align << "Best alignment score is: " << getScore(enumerator) << endl;
       os_align << "Distance from Seq head to 5' adaptor end is: " << end_pos << endl;
       os_align << Ali << endl;
 
-      query = suffix(query, end_pos);
-      if (qual !=  "")        /* if qual == "" means this is fasta sequence */
-        qual = suffix(qual, end_pos);
+//      seq.Seq = suffix(seq.Seq, end_pos);
+      seq.Seq = seq.Seq.substr(end_pos);
+      if (seq.Qual !=  "")        /* if seq.Qual == "" means this is fasta sequence */
+//        seq.Qual = suffix(seq.Qual, end_pos);
+        seq.Qual = seq.Qual.substr(end_pos);
       return 1;
     }
     else if (direction == string("three"))
     {
-      os_align << ">" << id << "_three" << endl;
+      os_align << ">" << seq.ID << "_three" << endl;
       os_align << "Best alignment score is: " << getScore(enumerator) << endl;
       os_align << "Distance from Seq tail to 3' adaptor start is: " 
-        << length(query) - start_pos << endl;
+//        << length(query) - start_pos << endl;
+        << seq.Seq.length() - start_pos << endl;
       os_align << Ali << endl;
 
-      query = prefix(query, start_pos); 
-      if (qual != "")        /* if qual == "" means this is fasta sequence */
-        qual = prefix(qual, start_pos);
+//      seq.Seq = prefix(seq.Seq, start_pos); 
+      seq.Seq = seq.Seq.substr(0, start_pos); 
+      if (seq.Qual != "")        /* if seq.Qual == "" means this is fasta sequence */
+//        seq.Qual = prefix(seq.Qual, start_pos);
+        seq.Qual = seq.Qual.substr(0, start_pos); 
       return 1;
     }
     else
-    {
-      cerr << "invalid format in: " << __FILE__ 
-        << " line: " << __LINE__ << endl;
-      exit(1);
-    }
+      errx(1, "bad format specified here in file: ", __FILE__, " Line: ", __LINE__);
   }
   else
-  {
-/*     no adaptor found
- */
-    return 0;
-  }
+    return 0;                                   /* no adaptor found */
 }
 
 /* 
@@ -295,18 +298,21 @@ int do_alignment(CharString & id, CharString & query, CharString & qual, const C
  * I do not want to have a very long function. Briefly, if detected adaptor,
  * d5 will be set up correspondingly.
  */
-void examine_5(CharString & id, CharString & query, CharString & qual, 
-    const CharString & adaptor, int num_mismatches,  const string & direction, 
+//void examine_5(CharString & id, CharString & query, CharString & qual, 
+//    const CharString & adaptor, int num_mismatches,  const string & direction, 
+void examine_5(Seqrecord & seqobj, 
+    const string & adaptor, int num_mismatches,  const string & direction, 
     bool CaseInSensitive, ostream & os_align, adapt_5 & d5, bool IUPAC)
 {
   if (!IUPAC)
-    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
+//    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
+    if (do_alignment(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
       d5 = FOUND_5_ADAPT;
     else
       d5 = NO_5_ADAPT;
   else
-    if (regEx_match(id, query, qual, adaptor, num_mismatches, direction, 
+    if (regEx_match(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
       d5 = FOUND_5_ADAPT;
     else
@@ -327,18 +333,21 @@ void print(std::ostream & os, TIter  begin, TIter  end, const char * message = "
 /* similar to above function, this function only examines whether the query has
  * significant similarity with the 3' adaptor
  */
-void examine_3(CharString & id, CharString & query, CharString & qual, 
-    const CharString & adaptor, int num_mismatches,  const string & direction, 
+//void examine_3(CharString & id, CharString & query, CharString & qual, 
+void examine_3(Seqrecord & seqobj, 
+    const string & adaptor, int num_mismatches,  const string & direction, 
     bool CaseInSensitive, ostream & os_align, adapt_3 & d3, bool IUPAC)
 {
   if(!IUPAC)
-    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
+//    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
+    if (do_alignment(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
       d3 = FOUND_3_ADAPT;
     else
       d3 = NO_3_ADAPT;
   else
-    if (regEx_match(id, query, qual, adaptor, num_mismatches, direction, 
+//    if (regEx_match(id, query, qual, adaptor, num_mismatches, direction, 
+    if (regEx_match(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
       d3 = FOUND_3_ADAPT;
     else
@@ -397,17 +406,17 @@ void report_paramter_setting (const po::variables_map & vm,
 
 /* using seqan interface write seq to ostream
  */
-void write_seq2stream(ostream & os, const CharString & id,
-                    const CharString & seq, const CharString & qual)
-{ 
-  if (seq != "")              /* if seq is empty means this is a solely adaptor sequence */
-  {                                             /* Here we skipped printing these empty sequences */
-    if( qual != "" )
-      writeRecord(os, id, seq, qual, Fastq());
-    else
-      writeRecord(os, id, seq, Fasta());
-  }
-}
+//void write_seq2stream(ostream & os, const CharString & id,
+//                    const CharString & seq, const CharString & qual)
+//{ 
+//  if (seq != "")              /* if seq is empty means this is a solely adaptor sequence */
+//  {                                             /* Here we skipped printing these empty sequences */
+//    if( qual != "" )
+//      writeRecord(os, id, seq, qual, Fastq());
+//    else
+//      writeRecord(os, id, seq, Fasta());
+//  }
+//}
 
 void get_time_stamp(char * buffer)
 {
@@ -419,11 +428,13 @@ void get_time_stamp(char * buffer)
 }
 /* get the allowed number of mismatches and indels for 5'
  */
-int get_allowed_mismatch_indel(const po::variables_map & vm, const CharString & adaptor,
+//int get_allowed_mismatch_indel(const po::variables_map & vm, const CharString & adaptor,
+int get_allowed_mismatch_indel(const po::variables_map & vm, const string & adaptor,
                                const char * direction)
 {
   int allowed_gap_mismatches;
-  int adaptor_len = length(adaptor);
+//  int adaptor_len = length(adaptor);
+  int adaptor_len = adaptor.length();
   float pct = vm["percent"].as<float>();
   if (strcmp(direction, "five") == 0)
     if (vm.count("five-mismatch"))
@@ -473,16 +484,28 @@ map<std::string, std::string> IUPAC_map()
   return m;
 }
 
-CharString translate_IUPAC(const CharString & db)
+//CharString translate_IUPAC(const string & db)
+string translate_IUPAC(const string & db)
 {
-  string str_db = string(toCString(db));
+  string str_db = db;
   map<std::string, std::string> m = IUPAC_map();
   typedef map<std::string, std::string> Mtype;
   Mtype::iterator it = m.begin();
   for(; it != m.end(); ++it)
     str_db = boost::regex_replace(str_db, boost::regex(it->first), it->second);
-  CharString new_db = str_db;
-  return new_db;
+//  string new_db = str_db;
+  return str_db;
+}
+
+void Judge_Write(ostream & OS_with_adaptor, ostream & OS_no_adaptor, Seqrecord & seq, 
+                  adapt_5 & d5, adapt_3 & d3, const char * format)
+{
+    if (judge_adaptor(d5,d3))
+//        write_seq2stream(OS_with_adaptor, id, query, qual);
+      WriteRecord(OS_with_adaptor, seq, format);
+    else /* case whole the seq length < specified to be cut leading length*/
+//        write_seq2stream(OS_no_adaptor, id, query, qual);
+      WriteRecord(OS_no_adaptor, seq, format);
 }
 
 template <typename TStream>
@@ -498,69 +521,65 @@ int cut_leading_tailing_stream( TStream &stream,
     int start_pos = vm["head"].as<int>();
     int end_pos = vm["tail"].as<int>();
     Seqrecord seq;
-    CharString id, query, qual;
     while(ReadRecord(stream, seq, format))
     {
       ++total;
-      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-      if ( start_pos < length(query) - 1 && /* check at least < seq length */
-          length(query) - end_pos - start_pos > vm["length-cutoff"].as<int>())
+//      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+      if ( start_pos < length(seq.Seq) - 1 && /* check at least < seq length */
+          length(seq.Seq) - end_pos - start_pos > vm["length-cutoff"].as<int>())
         /* length(query)-endpos = tobe cut position */
       {
-        query = infix(query, start_pos, length(query) - end_pos);
-        if (qual != "")
-          qual  = infix(qual, start_pos, length(query) - end_pos);
+//        query = infix(query, start_pos, length(query) - end_pos);
+        seq.Seq = seq.Seq.substr(start_pos, length(seq.Seq) - end_pos - start_pos);
+        if (seq.Qual != "")
+//          qual  = infix(qual, start_pos, length(query) - end_pos);
+          seq.Qual = seq.Qual.substr(start_pos, length(seq.Qual) - end_pos - start_pos);
         d5 = FOUND_5_ADAPT;
         d3 = FOUND_3_ADAPT;
       }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
+      Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
     }
   }
   else if (vm.count("head") )
   {
     int start_pos = vm["head"].as<int>();
     Seqrecord seq;
-    CharString id, query, qual;
+//    CharString id, query, qual;
     while(ReadRecord(stream, seq, format))
     {
       ++total;
-      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-      if ( start_pos < length(query) - 1) /* check at least < seq length */
+//      id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+      if ( start_pos < length(seq.Seq) - 1) /* check at least < seq length */
       {
-        query = suffix(query, start_pos);
-        if (qual != "")
-          qual  = suffix(qual, start_pos);
+//        query = suffix(query, start_pos);
+        seq.Seq = seq.Seq.substr(start_pos);
+        if (seq.Qual != "")
+//          qual  = suffix(qual, start_pos);
+          seq.Qual = seq.Qual.substr(start_pos);
         d5 = FOUND_5_ADAPT;
       }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
+      Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
     }
   }
   else if (vm.count("tail") )
   {
     int end_pos = vm["tail"].as<int>();
     Seqrecord seq;
-    CharString id, query, qual;
+//    CharString id, query, qual;
     while(ReadRecord(stream, seq, format))
     {
       ++total;
-      id = seq.ID; query = seq.Seq; qual = seq.Qual; 
-      if ( length(query) - end_pos > vm["length-cutoff"].as<int>() ) 
+//      id = seq.ID; query = seq.Seq; qual = seq.Qual; 
+      if ( length(seq.Seq) - end_pos > vm["length-cutoff"].as<int>() ) 
       {
-        query = prefix(query, end_pos);
-        if (qual != "")
-          qual  = prefix(qual, end_pos);
+//        query = prefix(query, end_pos);
+        seq.Seq = seq.Seq.substr(0, end_pos); 
+        if (seq.Qual != "")
+//          qual  = prefix(qual, end_pos);
+          seq.Qual = seq.Qual.substr(0, end_pos); 
         d3 = FOUND_3_ADAPT;
       }
-      if (judge_adaptor(d5,d3))
-        write_seq2stream(OS_with_adaptor, id, query, qual);
-      else /* case whole the seq length < specified to be cut leading length*/
-        write_seq2stream(OS_no_adaptor, id, query, qual);
+      Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
     }
   }
 }
@@ -577,11 +596,11 @@ void RemovePreExistedFiles(const po::variables_map & vm, const char * format)
 {
   for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
   {
-    CharString five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
+    string five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
     if (vm.count("out_with_adaptor"))
     {
       char filename[200];
-      int n = sprintf(filename, "%s%s.%s", toCString(five_adaptor), vm["out_with_adaptor"].as<string>().c_str(), format);
+      int n = sprintf(filename, "%s%s.%s", five_adaptor.c_str(), vm["out_with_adaptor"].as<string>().c_str(), format);
       if (fileExists(std::string (filename)))
       {
         std::cerr << filename << " exists in your current direcotry" << std::endl;
@@ -594,22 +613,22 @@ void RemovePreExistedFiles(const po::variables_map & vm, const char * format)
   }
 }
 
-std::map<CharString, std::ostream*> GetMapOfFile2Ofstream (const po::variables_map & vm, const char * format)
+std::map<std::string, std::ostream*> GetMapOfFile2Ofstream (const po::variables_map & vm, const char * format)
 {
-  std::map<CharString, std::ostream*> m; // m used to contain the std::map of filename to ofstream pointer
+  std::map<std::string, std::ostream*> m; // m used to contain the std::map of filename to ofstream pointer
   for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
   {
-    CharString five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
+    std::string five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
     if (vm.count("out_with_adaptor"))
     {
       char filename[200];
-      int n = sprintf(filename, "%s%s.%s", toCString(five_adaptor), vm["out_with_adaptor"].as<string>().c_str(), format);
+      int n = sprintf(filename, "%s%s.%s", five_adaptor.c_str(), vm["out_with_adaptor"].as<string>().c_str(), format);
       if (!m.count(five_adaptor))
       {
         m[five_adaptor] = new ofstream(filename, fstream::app);
       }
       else
-        errx(1, "Error: %s already in map!\n", toCString(five_adaptor));
+        errx(1, "Error: %s already in map!\n", five_adaptor.c_str());
     }
     else
       m[five_adaptor] = &std::cout;
@@ -619,54 +638,51 @@ std::map<CharString, std::ostream*> GetMapOfFile2Ofstream (const po::variables_m
 
 template <typename TStream>
 void read_process_5_3_fastaq(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
+    const std::string & five_adaptor, const std::string & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
     ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
 {
   Seqrecord seq;
-  CharString id, query, qual;
+//  CharString id, query, qual;
   while(ReadRecord(stream, seq, format))
   {
     ++total;
-    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+//    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+    examine_5(seq, five_adaptor, five_allowed_mismatch_indel, "five", 
         case_insensitive, OS_alignment, d5, IUPAC);
-    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+    examine_3(seq, three_adaptor, three_allowed_mismatch_indel, "three", 
         case_insensitive, OS_alignment, d3, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
+    Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
   }
 }
 
 template <typename TStream>
 void read_process_5_fastaq(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
+//    const CharString & five_adaptor, const CharString & three_adaptor, 
+    const std::string & five_adaptor, const std::string & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
     ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
 {
   Seqrecord seq;
-  CharString id, query, qual;
+//  CharString id, query, qual;
   while(ReadRecord(stream, seq, format))
   {
     ++total;
-    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+//    id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+//    examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+    examine_5(seq,five_adaptor, five_allowed_mismatch_indel, "five", 
         case_insensitive, OS_alignment, d5, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
+    Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
   }
 }
 
 
 template <typename TStream>
 void read_process_3_fastaq(TStream & stream, 
-    const CharString & five_adaptor, const CharString & three_adaptor, 
+//    const CharString & five_adaptor, const CharString & three_adaptor, 
+    const std::string & five_adaptor, const std::string & three_adaptor, 
     int five_allowed_mismatch_indel, int three_allowed_mismatch_indel, 
     bool case_insensitive, ostream & OS_alignment, ostream & OS_with_adaptor,
     ostream & OS_no_adaptor, adapt_3 & d3, adapt_5 & d5, bool IUPAC, const char * format)
@@ -677,12 +693,9 @@ void read_process_3_fastaq(TStream & stream,
   {
     ++total;
     id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-    examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+    examine_3(seq,three_adaptor, three_allowed_mismatch_indel, "three", 
         case_insensitive, OS_alignment, d3, IUPAC);
-    if (judge_adaptor(d5,d3))
-      write_seq2stream(OS_with_adaptor, id, query, qual);
-    else
-      write_seq2stream(OS_no_adaptor, id, query, qual);
+    Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
   }
 }
 
@@ -713,8 +726,8 @@ void TrimmingSeq_from_stream( TStream & stream,
 
   if (vm["five"].as<std::vector<std::string> >().size() <= 1) /* using default OS_with_adaptor */
   {
-    CharString five_adaptor = vm.count("five") ? vm["five"].as<std::vector<std::string> >()[0] : "";
-    CharString three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
+    std::string five_adaptor = vm.count("five") ? vm["five"].as<std::vector<std::string> >()[0] : "";
+    std::string three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
 
     if (vm.count("out_with_adaptor"))
     {
@@ -731,8 +744,8 @@ void TrimmingSeq_from_stream( TStream & stream,
     }
     int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
     int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-    CharString id, query, qual;
-    Seqrecord seq;
+//    CharString id, query, qual;
+//    Seqrecord seq;
     if (inspect_5 && inspect_3)
     {
       read_process_5_3_fastaq(stream, five_adaptor, three_adaptor, 
@@ -756,32 +769,31 @@ void TrimmingSeq_from_stream( TStream & stream,
                               three_allowed_mismatch_indel, 
                               case_insensitive, OS_alignment, 
                               OS_with_adaptor, OS_no_adaptor, d3, d5,IUPAC, format);
-
     }
     else
       errx(1, "one of inspect_3 and inspect_5 has to be true");
   }
   else
   {
-    CharString three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
+    std::string three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
   // m used to contain the std::map of filename to ofstream pointer
-    std::map<CharString, std::ostream*> m = GetMapOfFile2Ofstream(vm, format); 
+    std::map<std::string, std::ostream*> m = GetMapOfFile2Ofstream(vm, format); 
     if (inspect_5 && inspect_3)
     {
       Seqrecord seq;
-      CharString id, query, qual;
+//      CharString id, query, qual;
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-        CharString five_adaptor;
+//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+        std::string five_adaptor;
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
           five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
           if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
             five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
           int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-          examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+          examine_5(seq,five_adaptor, five_allowed_mismatch_indel, "five", 
               case_insensitive, OS_alignment, d5, IUPAC);
           if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
             break;
@@ -789,41 +801,35 @@ void TrimmingSeq_from_stream( TStream & stream,
         if (IUPAC)                              /* need to check 3' adaptor */
           three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
         int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-        examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        examine_3(seq,three_adaptor, three_allowed_mismatch_indel, "three", 
             case_insensitive, OS_alignment, d3, IUPAC);
 
         std::ostream & OS_with_adaptor = *m[five_adaptor];     /* overwrites default OS_with_adaptor */
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual);
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
+        Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
     }
     else if (inspect_5)
     {
       Seqrecord seq;
-      CharString id, query, qual;
+//      CharString id, query, qual;
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
-        CharString five_adaptor; 
+//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+        std::string five_adaptor; 
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
           five_adaptor = vm["five"].as<std::vector<std::string> >()[i];
           if (IUPAC)                    /* if IUPAC is true translate the IUPAC letter first */
             five_adaptor = translate_IUPAC(five_adaptor); /*   in   = GWGTTTGAAG */
           int five_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, five_adaptor, "five");
-          examine_5(id, query, qual, five_adaptor, five_allowed_mismatch_indel, "five", 
+          examine_5(seq,five_adaptor, five_allowed_mismatch_indel, "five", 
               case_insensitive, OS_alignment, d5, IUPAC);
           if (d5 == FOUND_5_ADAPT) // stop if already found the adaptor
             break;
         }
         std::ostream & OS_with_adaptor = *m[five_adaptor];     /* overwrites default OS_with_adaptor */
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual);
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
+        Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
     }
     else if (inspect_3)
@@ -837,20 +843,17 @@ void TrimmingSeq_from_stream( TStream & stream,
       std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
 
       Seqrecord seq;
-      CharString id, query, qual;
+//      CharString id, query, qual;
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
+//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         if (IUPAC)                              /* need to check 3' adaptor */
           three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
         int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
-        examine_3(id, query, qual, three_adaptor, three_allowed_mismatch_indel, "three", 
+        examine_3(seq,three_adaptor, three_allowed_mismatch_indel, "three", 
             case_insensitive, OS_alignment, d3, IUPAC);
-        if (judge_adaptor(d5,d3))
-          write_seq2stream(OS_with_adaptor, id, query, qual); /* using default OS_with_adaptor */
-        else
-          write_seq2stream(OS_no_adaptor, id, query, qual);
+        Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
     }
     if (vm.count("out_with_adaptor"))           /* only need to delete when -o is supplied */
