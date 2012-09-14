@@ -11,6 +11,7 @@ RELEASE_FLAGS = -O3
 NOASSERT_FLAGS = -DNDEBUG
 
 CXXFLAGS = $(RELEASE_FLAGS) $(INC)
+#CXXFLAGS = -ggdb $(INC)
 DEBUG_CXXFLAGS = -ggdb $(INC)
 FIND :=$(shell which find)
 # default link with mac libraries
@@ -82,32 +83,30 @@ clean:
 .PHONY: test
 PREFIX := ../
 test:
-	dir = test
-	$(shell rm -rf $(dir))
-	$(shell mkdir $(dir)) 
-	$(shell cd $(dir))
-#	dir=$(shell `pwd`)
-	@echo $(dir)
-	$(shell cp $(PREFIX)bin/Adaptor_trimmer .)
-	@echo "Test Adaptor_trimmer dynamic programming mode (take input from STDIN)"
-	cat $(PREFIX)data/adaptor_test_data.fastq $(PREFIX)data/adaptor_test_data.fastq | ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0
-	@echo "Test Adaptor_trimmer dynamic programming mode (take input from STDIN) done ..."
-#	@echo Test Adaptor_trimmer dynamic programming mode (take input from file)
-#	./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq data/adaptor_test_data.fastq  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq
-#	@echo Test Adaptor_trimmer dynamic programming mode (take input from file) done ...
-#	@echo Test Adaptor_trimmer IUPAC mode
-#	cat data/AS10.fastq | ./Adaptor_trimmer  -I -5 GYGCASCAGKCGMGAAW -o with_5_adaptor -n no_5_adaptor -U -f fastq
-#	cat data/AS10.fastq | ./Adaptor_trimmer  -I -5 G[CT]GCA[CG]CAG[GT]CG[CA]GAA[AT] -o with_5_adaptor -n no_5_adaptor -U -f fastq
-#	@echo Test Adaptor_trimmer IUPAC mode done ...
-#	@echo Test Adaptor_trimmer using leading and tailing bases mode
-#	./Adaptor_trimmer  data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq
-#	@echo Test Adaptor_trimmer using leading and tailing bases mode done
-#	@echo Test Guess_fastq_format
-#	./Guess_fastq_format data/FS2.fastq
-#	@echo Test Guess_fastq_format done ...
-#	@echo Test Quality_trimmer
-#	./Quality_trimmer -f "fastq-sanger" data/AS10.fastq -c 20 -l 100  -s seqs_lessthan20.fastq >seqs_nolessthan20.fastq
-#	@echo Test Quality_trimmer done ...
-#	@echo Test demultiplexing mode
-#	cat data/multiplexing.fastq | ./Adaptor_trimmer -I -5 ACGCCGCAgagtttgatcntggctcag -5 ACGTGTTAgagtttgatcntggctcag -f fastq -o with_5_adaptor
-#	@echo Test demultiplexing mode done ...
+	rm -rf test
+	mkdir test
+	cp bin/Adaptor_trimmer test
+	cd test ; \
+	cp $(PREFIX)bin/* . ; \
+	echo "Test Adaptor_trimmer dynamic programming mode take input from STDIN" ; \
+	cat $(PREFIX)data/adaptor_test_data.fastq $(PREFIX)data/adaptor_test_data.fastq | ./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq -l 0 -r 0; \
+	echo "Test Adaptor_trimmer dynamic programming mode take input from STDIN done ...\n" ; \
+	echo Test Adaptor_trimmer dynamic programming mode take input from file; \
+	./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i $(PREFIX)data/adaptor_test_data.fastq $(PREFIX)data/adaptor_test_data.fastq  -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR -f fastq ; \
+	echo Test Adaptor_trimmer dynamic programming mode take input from file done ... "\n"; \
+	echo Test Adaptor_trimmer IUPAC mode ; \
+	cat $(PREFIX)data/AS10.fastq | ./Adaptor_trimmer  -I -5 GYGCASCAGKCGMGAAW -o with_5_adaptor -n no_5_adaptor -U -f fastq ; \
+	cat $(PREFIX)data/AS10.fastq | ./Adaptor_trimmer  -I -5 G[CT]GCA[CG]CAG[GT]CG[CA]GAA[AT] -o with_5_adaptor -n no_5_adaptor -U -f fastq ; \
+	echo Test Adaptor_trimmer IUPAC mode done ... "\n"; \
+	echo Test Adaptor_trimmer using leading and tailing bases mode ; \
+	./Adaptor_trimmer  $(PREFIX)data/adaptor_test_data.fastq -H 12 -t 4 -o with_5_adaptor -f fastq ; \
+	echo Test Adaptor_trimmer using leading and tailing bases mode done "\n"; \
+	echo Test Guess_fastq_format ; \
+	./Guess_fastq_format $(PREFIX)data/FS2.fastq ; \
+	echo Test Guess_fastq_format done ... "\n"; \
+	echo Test Quality_trimmer ; \
+	./Quality_trimmer -f "fastq-sanger" $(PREFIX)data/AS10.fastq -c 20 -l 100  -s seqs_lessthan20.fastq >seqs_nolessthan20.fastq ; \
+	echo Test Quality_trimmer done ... "\n"; \
+	echo Test demultiplexing mode ; \
+	cat $(PREFIX)data/multiplexing.fastq | ./Adaptor_trimmer -I -5 ACGCCGCAgagtttgatcntggctcag -5 ACGTGTTAgagtttgatcntggctcag -f fastq -o with_5_adaptor ; \
+	echo Test demultiplexing mode done ... "\n"; 
