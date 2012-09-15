@@ -54,7 +54,7 @@ static int have_5_and_3_adaptor_counter = 0;
 static int no_5_and_3_adaptor_counter = 0;
 static int sum = 0;                            /* the sum of above four, which should = total */
 static int total = 0;                          /* total number of sequence processed */
-
+static std::string format;
 /* 
  * return 1 if found adaptor
  * return 0 if no adaptor found
@@ -364,6 +364,8 @@ void report_paramter_setting (const po::variables_map & vm,
   copy(vm["input"].as<vector<string> >().begin(), vm["input"].as<vector<string> >().end(),
       ostream_iterator<string>(out, " "));
   out << endl;
+
+  out << setw(width) << left << "Format is:" << setw(width) << left << format << std::endl;
   if (vm.count("five"))
   {
     out << setw(width) << left << "5' adaptor:" << setw(width) << left;
@@ -865,6 +867,40 @@ void TrimmingSeq_from_stream( TStream & stream,
 
 }
 
+template <typename TStream>
+string  get_Fastaq_format(TStream & stream)
+{
+  std::string format;
+  if (stream.peek() == '>')
+    format = "fasta";
+  else if (stream.peek() == '@')
+    format = "fastq";
+  else
+    errx(1, "unable to determine format");
+  return format;
+}
+
+std::string get_format_app(const po::variables_map & vm)
+{
+  std::string format;
+  if (vm["input"].as<vector<string> >().size() == 1 &&
+      vm["input"].as<vector<string> >()[0] == string("stdin") )
+  {
+    if (!isatty(fileno(stdin)))
+      format = get_Fastaq_format(std::cin);
+  }
+  else
+  {
+    string filename;
+    filename = vm["input"].as<vector<string> >()[0]; 
+    ifstream stream(filename.c_str());
+    if (!stream.good())
+      errx(1, "cannot open file %s for read", filename.c_str());
+    format = get_Fastaq_format(stream);
+    stream.close();
+  }
+  return format;
+}
 
 int main (int argc, char * argv[])
 {
@@ -890,8 +926,8 @@ int main (int argc, char * argv[])
     ("input,i", po::value<vector<string> >()->default_value(vector<string>(1, "stdin"), 
                                                             "STDIN"), 
      "Input file, has to be in fastq or fasta format. [str]")
-    ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
-     "the format of input file, valid formats include fastq and fasta [str]")
+//    ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
+//     "the format of input file, valid formats include fastq and fasta [str]")
     ("five-mismatch,l", po::value<int>(), 
      "Allowed number of mismatches or gaps between the read sequence "
      "and the 5' adaptor sequence. By setting this value to 1, we are "
@@ -973,6 +1009,7 @@ int main (int argc, char * argv[])
       exit(1);
     }
   }
+  format = get_format_app(vm);
   report_paramter_setting(vm);
 /* 
  * start perform local alignment
@@ -988,19 +1025,14 @@ int main (int argc, char * argv[])
   {
     out.open(vm["out_with_adaptor"].as<string>().c_str());
     if (!out.is_open())
-    {
       errx(1, "Error in open file %s" , __FILE__, __LINE__);
-    }
   }
   std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
   if (vm.count("out_no_adaptor") )
   {
     out1.open(vm["out_no_adaptor"].as<string>().c_str());
     if (!out1.is_open())
-    {
       errx(1, "Error in open file %s" , __FILE__, __LINE__);
-    }
-
   }
   std::ostream & OS_no_adaptor = vm.count("out_no_adaptor") ? out1 : std::cout;
 
@@ -1012,14 +1044,11 @@ int main (int argc, char * argv[])
       if (!isatty(fileno(stdin)))
       {
         cut_leading_tailing_stream(std::cin, vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
-                                  vm["format"].as<string>().c_str());
+                                  format.c_str());
         return 0;
       }
       else
-      {
-        cerr << "The program is hanging and waiting for input from STDIN" << endl;
-        exit(1);
-      }
+        errx(1, "The program is hanging and waiting for input from STDIN");
     }
     else
     {
@@ -1031,7 +1060,7 @@ int main (int argc, char * argv[])
         if (!stream.good())
           errx(1, "cannot open file %s for read", filename.c_str());
         cut_leading_tailing_stream(stream, vm, OS_with_adaptor, OS_no_adaptor,d5, d3, 
-                                 vm["format"].as<string>().c_str());
+                                    format.c_str());
       }
       return 0;
     }
@@ -1047,22 +1076,18 @@ int main (int argc, char * argv[])
   if (inspect_5 && inspect_3)
   {
     // delete the pre-existing files in current directory
-    RemovePreExistedFiles(vm, vm["format"].as<string>().c_str());
+
+    RemovePreExistedFiles(vm, format.c_str());
 
     if (vm["input"].as<vector<string> >().size() == 1 &&
         vm["input"].as<vector<string> >()[0] == string("stdin") )
     {
       if (!isatty(fileno(stdin)))
-      {
         TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
-                               vm["format"].as<string>().c_str());
-      }
+                                  format.c_str());
       else
-      {
-        cerr << "The program is hanging and waiting for input from STDIN" << endl;
-        exit(1);
-      }
+        errx(1, "The program is hanging and waiting for input from STDIN");
     }
     else                                        /* read from file */
     {
@@ -1076,7 +1101,7 @@ int main (int argc, char * argv[])
           errx(1, "cannot open file %s for read", filename.c_str());
         TrimmingSeq_from_stream(stream, vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
-                              vm["format"].as<string>().c_str());
+                                  format.c_str());
       }
     }
   }
@@ -1093,7 +1118,7 @@ int main (int argc, char * argv[])
       if (!isatty(fileno(stdin)))
         TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
-                               vm["format"].as<string>().c_str());
+                                  format.c_str());
       else
         errx(1, "The program is hanging and waiting for input from STDIN");
     }
@@ -1108,7 +1133,7 @@ int main (int argc, char * argv[])
           errx(1, "cannot open file %s for read", filename.c_str());
         TrimmingSeq_from_stream(stream,vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
-                              vm["format"].as<string>().c_str());
+                                  format.c_str());
       }
      
     }
@@ -1122,9 +1147,9 @@ int main (int argc, char * argv[])
       vm["input"].as<vector<string> >()[0] == string("stdin") )
     {
       if (!isatty(fileno(stdin)))
-         TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
+        TrimmingSeq_from_stream(std::cin, vm, case_insensitive, d5, d3, OS_alignment,
                                inspect_5, inspect_3,
-                               vm["format"].as<string>().c_str());
+                                  format.c_str());
       else
         errx(1, "The program is hanging and waiting for input from STDIN");
     }
@@ -1139,7 +1164,7 @@ int main (int argc, char * argv[])
           errx(1, "cannot open file %s for read", filename.c_str());
         TrimmingSeq_from_stream(stream,vm, case_insensitive, d5, d3, OS_alignment,
                               inspect_5, inspect_3,
-                              vm["format"].as<string>().c_str());
+                                  format.c_str());
       }
     }
   }

@@ -27,7 +27,7 @@ GENERAL_LIST = $(shell $(FIND) data) \
 			   $(shell $(FIND) scripts) \
 			   $(wildcard *.md) \
 			   $(wildcard *.rst) \
-			   Makefile LICENSE VERSION AUTHORS 
+			   Makefile README.md LICENSE VERSION AUTHORS 
 SRC_PKG_LIST = $(shell $(FIND) src) \
                $(shell $(FIND) SeqAn1.3 Boost1.50) \
                $(GENERAL_LIST)
@@ -109,4 +109,8 @@ test:
 	echo Test Quality_trimmer done ... "\n"; \
 	echo Test demultiplexing mode ; \
 	cat $(PREFIX)data/multiplexing.fastq | ./Adaptor_trimmer -I -5 ACGCCGCAgagtttgatcntggctcag -5 ACGTGTTAgagtttgatcntggctcag -f fastq -o with_5_adaptor ; \
-	echo Test demultiplexing mode done ... "\n"; 
+	echo Test demultiplexing mode done ... "\n"; \
+	echo Test auto detect FASTA/Q format \
+	./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fastq   -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR
+	./Adaptor_trimmer -I -o with_5_adaptor -n no_5_adaptor -i data/adaptor_test_data.fasta   -5 IamasINGLEADAPT -3 IAMARiGHTADAPTOR
+	echo Test auto detect FASTA/Q format ... done\
