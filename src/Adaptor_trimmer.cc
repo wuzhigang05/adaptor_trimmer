@@ -1110,7 +1110,8 @@ int main (int argc, char * argv[])
     bool inspect_5 = true;
     bool inspect_3 = false;    /* don't need to look at 3' end because 3' adaptor specified */
     // delete the pre-existing files in current directory
-    RemovePreExistedFiles(vm, vm["format"].as<string>().c_str());
+//    RemovePreExistedFiles(vm, vm["format"].as<string>().c_str());
+    RemovePreExistedFiles(vm, format.c_str());
 
    if (vm["input"].as<vector<string> >().size() == 1 &&
       vm["input"].as<vector<string> >()[0] == string("stdin") )
