@@ -27,7 +27,7 @@
 #include <math.h>
 #include <iomanip>
 #include <err.h>
-#include "Fasta_reader.h"
+//#include "Fasta_reader.h"
 #include "readRecord.h"
 #include <algorithm>
 #include <iterator>
@@ -55,6 +55,7 @@ static int no_5_and_3_adaptor_counter = 0;
 static int sum = 0;                            /* the sum of above four, which should = total */
 static int total = 0;                          /* total number of sequence processed */
 static std::string format;
+static int minimum_match = 3; /* a partial adaptor will be trimmed if it has at least 3 exact matches */
 /* 
  * return 1 if found adaptor
  * return 0 if no adaptor found
@@ -242,7 +243,6 @@ int do_alignment(Seqrecord & seq, const string & db,
     unsigned d_end =clippedEndPosition(row(Ali, 1)); 
     int d_gaps = num_of_gaps(Ali, 1);
     int gaps = num_of_gaps(Ali, 0);
-//    unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + length(db) - d_end + d_gaps; /* inclusive */
     unsigned end_pos = clippedEndPosition(row(Ali, 0)) - gaps + db.length() - d_end + d_gaps; /* inclusive */
     //                                                          ------------------------------
     //                                                          if the best alignment does not extend to the end of adaptor then add these up
@@ -262,10 +262,8 @@ int do_alignment(Seqrecord & seq, const string & db,
       os_align << "Distance from Seq head to 5' adaptor end is: " << end_pos << endl;
       os_align << Ali << endl;
 
-//      seq.Seq = suffix(seq.Seq, end_pos);
       seq.Seq = seq.Seq.substr(end_pos);
       if (seq.Qual !=  "")        /* if seq.Qual == "" means this is fasta sequence */
-//        seq.Qual = suffix(seq.Qual, end_pos);
         seq.Qual = seq.Qual.substr(end_pos);
       return 1;
     }
@@ -274,14 +272,11 @@ int do_alignment(Seqrecord & seq, const string & db,
       os_align << ">" << seq.ID << "_three" << endl;
       os_align << "Best alignment score is: " << getScore(enumerator) << endl;
       os_align << "Distance from Seq tail to 3' adaptor start is: " 
-//        << length(query) - start_pos << endl;
         << seq.Seq.length() - start_pos << endl;
       os_align << Ali << endl;
 
-//      seq.Seq = prefix(seq.Seq, start_pos); 
       seq.Seq = seq.Seq.substr(0, start_pos); 
       if (seq.Qual != "")        /* if seq.Qual == "" means this is fasta sequence */
-//        seq.Qual = prefix(seq.Qual, start_pos);
         seq.Qual = seq.Qual.substr(0, start_pos); 
       return 1;
     }
@@ -290,6 +285,108 @@ int do_alignment(Seqrecord & seq, const string & db,
   }
   else
     return 0;                                   /* no adaptor found */
+}
+
+int trim_partial_adatpor_5(Seqrecord & seq, const std::string & adaptor, 
+                            bool CaseInSensitive, ostream & os_align)
+{
+  string query_uppercase = seq.Seq;
+  string db_uppercase = adaptor;
+  if (CaseInSensitive)
+  {
+    toUpper(query_uppercase);
+    toUpper(db_uppercase);
+  }
+  std::string first_three_bases = query_uppercase.substr(0, minimum_match);
+  size_t pos = db_uppercase.find(first_three_bases);
+  if( pos != std::string::npos)
+  {
+    std::string suffix_of_db = db_uppercase.substr(pos);
+    std::string prefix_of_query = query_uppercase.substr(0, suffix_of_db.length());
+    if (suffix_of_db == prefix_of_query)
+    {
+      int end_pos = prefix_of_query.length();
+      seq.Seq = seq.Seq.substr(end_pos);
+      if (seq.Qual !=  "")        /* if seq.Qual == "" means this is fasta sequence */
+        seq.Qual = seq.Qual.substr(end_pos);
+      os_align << ">" << seq.ID << "_five" << endl;
+      os_align << "Distance from Seq head to 5' adaptor end is: " << end_pos << endl;
+      os_align <<  prefix_of_query << endl;
+      return 1;
+    }
+    else
+    {
+      while((pos = db_uppercase.find(first_three_bases, pos)) != std::string::npos)
+      {
+        std::string suffix_of_db = db_uppercase.substr(pos);
+        std::string prefix_of_query = query_uppercase.substr(0, suffix_of_db.length());
+        if (suffix_of_db == prefix_of_query)
+        {
+          int end_pos = prefix_of_query.length();
+          seq.Seq = seq.Seq.substr(end_pos);
+          if (seq.Qual !=  "")        /* if seq.Qual == "" means this is fasta sequence */
+            seq.Qual = seq.Qual.substr(end_pos);
+          os_align << ">" << seq.ID << "_five" << endl;
+          os_align << "Distance from Seq head to 5' adaptor end is: " << end_pos << endl;
+          os_align <<  prefix_of_query << endl;
+          return 1;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+int trim_partial_adatpor_3(Seqrecord & seq, const std::string & adaptor, 
+                            bool CaseInSensitive, ostream & os_align)
+{
+  string query_uppercase = seq.Seq;
+  string db_uppercase = adaptor;
+  if (CaseInSensitive)
+  {
+    toUpper(query_uppercase);
+    toUpper(db_uppercase);
+  }
+  std::string last_three_bases = query_uppercase.substr(query_uppercase.length() - minimum_match);
+  size_t pos = db_uppercase.rfind(last_three_bases);
+  if( pos != std::string::npos)
+  {
+    std::string prefix_of_db = db_uppercase.substr(0, pos + minimum_match);
+    std::string suffix_of_query = query_uppercase.substr(query_uppercase.length() - prefix_of_db.length());
+    if (prefix_of_db == suffix_of_query)
+    {
+      int start_pos = seq.Seq.length() - suffix_of_query.length();
+      seq.Seq = seq.Seq.substr(0, start_pos); 
+      if (seq.Qual != "")        /* if seq.Qual == "" means this is fasta sequence */
+        seq.Qual = seq.Qual.substr(0, start_pos); 
+      os_align << ">" << seq.ID << "_three" << endl;
+      os_align << "Distance from Seq tail to 3' adaptor start is: " 
+        << seq.Seq.length() - start_pos << endl;
+      os_align <<  suffix_of_query << endl;
+      return 1;
+    }
+    else
+    {
+      while((pos = db_uppercase.rfind(last_three_bases, pos)) != std::string::npos)
+      {
+        std::string prefix_of_db = db_uppercase.substr(0, pos + minimum_match);
+        std::string suffix_of_query = query_uppercase.substr(query_uppercase.length() - prefix_of_db.length());
+        if (prefix_of_db == suffix_of_query)
+        {
+          int start_pos = seq.Seq.length() - suffix_of_query.length();
+          seq.Seq = seq.Seq.substr(0, start_pos); 
+          if (seq.Qual != "")        /* if seq.Qual == "" means this is fasta sequence */
+            seq.Qual = seq.Qual.substr(0, start_pos); 
+          os_align << ">" << seq.ID << "_three" << endl;
+          os_align << "Distance from Seq tail to 3' adaptor start is: " 
+            << seq.Seq.length() - start_pos << endl;
+          os_align <<  suffix_of_query << endl;
+          return 1;
+        }
+      }
+    }
+  }
+  return 0;
 }
 
 /* 
@@ -308,6 +405,8 @@ void examine_5(Seqrecord & seqobj,
 //    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
     if (do_alignment(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
+      d5 = FOUND_5_ADAPT;
+    else if (trim_partial_adatpor_5(seqobj, adaptor, CaseInSensitive, os_align))
       d5 = FOUND_5_ADAPT;
     else
       d5 = NO_5_ADAPT;
@@ -339,14 +438,14 @@ void examine_3(Seqrecord & seqobj,
     bool CaseInSensitive, ostream & os_align, adapt_3 & d3, bool IUPAC)
 {
   if(!IUPAC)
-//    if (do_alignment(id, query, qual, adaptor, num_mismatches, direction, 
     if (do_alignment(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
+      d3 = FOUND_3_ADAPT;
+    else if (trim_partial_adatpor_3(seqobj, adaptor, CaseInSensitive, os_align))
       d3 = FOUND_3_ADAPT;
     else
       d3 = NO_3_ADAPT;
   else
-//    if (regEx_match(id, query, qual, adaptor, num_mismatches, direction, 
     if (regEx_match(seqobj, adaptor, num_mismatches, direction, 
           CaseInSensitive, os_align))
       d3 = FOUND_3_ADAPT;
@@ -404,6 +503,9 @@ void report_paramter_setting (const po::variables_map & vm,
   if (vm.count("tail"))
      out << setw(width) << left << "tail is:" 
          << setw(width) << left << vm["tail"].as<int>()<< endl;
+   out << setw(width) << left << "minimum match for partial trimming is:" 
+       << setw(width) << left << minimum_match << endl;
+
 }
 
 /* using seqan interface write seq to ostream
@@ -726,7 +828,7 @@ void TrimmingSeq_from_stream( TStream & stream,
   }
   std::ostream & OS_no_adaptor = vm.count("out_no_adaptor") ? out1 : std::cout;
 
-  if (vm["five"].as<std::vector<std::string> >().size() <= 1) /* using default OS_with_adaptor */
+  if (inspect_5 && vm["five"].as<std::vector<std::string> >().size() <= 1) /* using default OS_with_adaptor */
   {
     std::string five_adaptor = vm.count("five") ? vm["five"].as<std::vector<std::string> >()[0] : "";
     std::string three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
@@ -779,15 +881,14 @@ void TrimmingSeq_from_stream( TStream & stream,
   {
     std::string three_adaptor = vm.count("three") ? vm["three"].as<string>() : "";
   // m used to contain the std::map of filename to ofstream pointer
-    std::map<std::string, std::ostream*> m = GetMapOfFile2Ofstream(vm, format); 
+//    std::map<std::string, std::ostream*> m = GetMapOfFile2Ofstream(vm, format);
     if (inspect_5 && inspect_3)
     {
       Seqrecord seq;
-//      CharString id, query, qual;
+      std::map<std::string, std::ostream*> m = GetMapOfFile2Ofstream(vm, format);
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         std::string five_adaptor;
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
@@ -809,15 +910,20 @@ void TrimmingSeq_from_stream( TStream & stream,
         std::ostream & OS_with_adaptor = *m[five_adaptor];     /* overwrites default OS_with_adaptor */
         Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
+      if (vm.count("out_with_adaptor"))           /* only need to delete when -o is supplied */
+      {
+        for(typeof(m.begin()) it = m.begin(); it != m.end(); ++it) /* clean up the map */
+          delete it->second;
+      }
+
     }
     else if (inspect_5)
     {
       Seqrecord seq;
-//      CharString id, query, qual;
+      std::map<std::string, std::ostream*> m = GetMapOfFile2Ofstream(vm, format);
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         std::string five_adaptor; 
         for (int i = 0; i < vm["five"].as<std::vector<std::string> >().size(); ++i)
         {
@@ -833,6 +939,12 @@ void TrimmingSeq_from_stream( TStream & stream,
         std::ostream & OS_with_adaptor = *m[five_adaptor];     /* overwrites default OS_with_adaptor */
         Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
+      if (vm.count("out_with_adaptor"))           /* only need to delete when -o is supplied */
+      {
+        for(typeof(m.begin()) it = m.begin(); it != m.end(); ++it) /* clean up the map */
+          delete it->second;
+      }
+
     }
     else if (inspect_3)
     {
@@ -845,11 +957,9 @@ void TrimmingSeq_from_stream( TStream & stream,
       std::ostream & OS_with_adaptor = vm.count("out_with_adaptor") ? out : std::cout;
 
       Seqrecord seq;
-//      CharString id, query, qual;
       while(ReadRecord(stream, seq, format))
       {
         ++total;
-//        id = seq.ID; query = seq.Seq; qual = seq.Qual;  
         if (IUPAC)                              /* need to check 3' adaptor */
           three_adaptor = translate_IUPAC(three_adaptor); /* out = G[AT]GTTTGAAG */
         int three_allowed_mismatch_indel = get_allowed_mismatch_indel(vm, three_adaptor, "three");
@@ -857,11 +967,6 @@ void TrimmingSeq_from_stream( TStream & stream,
             case_insensitive, OS_alignment, d3, IUPAC);
         Judge_Write(OS_with_adaptor, OS_no_adaptor, seq, d5, d3, format);
       }
-    }
-    if (vm.count("out_with_adaptor"))           /* only need to delete when -o is supplied */
-    {
-      for(typeof(m.begin()) it = m.begin(); it != m.end(); ++it) /* clean up the map */
-        delete it->second;
     }
   }
 
@@ -914,7 +1019,6 @@ int main (int argc, char * argv[])
       );
   desc.add_options()
     ("help,h", "Print this help page. True if present. [Boolean]")
-//    ("five,5", po::value<string>(), 
     ("five,5", po::value<vector<string> >(), 
      "Five prime adaptor sequence. Any sequence follows this 5' adaptor will "
      "be retained and any sequence precedes 5' adaptor (including 5' adaptor) "
@@ -926,8 +1030,6 @@ int main (int argc, char * argv[])
     ("input,i", po::value<vector<string> >()->default_value(vector<string>(1, "stdin"), 
                                                             "STDIN"), 
      "Input file, has to be in fastq or fasta format. [str]")
-//    ("format,f", po::value<string>()->default_value("fasta", "fasta"), 
-//     "the format of input file, valid formats include fastq and fasta [str]")
     ("five-mismatch,l", po::value<int>(), 
      "Allowed number of mismatches or gaps between the read sequence "
      "and the 5' adaptor sequence. By setting this value to 1, we are "
@@ -937,14 +1039,14 @@ int main (int argc, char * argv[])
      "indels allowed in the alignment. Since the program gurantees only report the "
      "the best alignment, so setting this value the larger the better. Doing so is "
      "fine for those sequence with adaptor sequences. However, for those reads without "
-     "adaptor squences will be wrongly trimmed. If you set this value, e.g. half of "
-     "of the adaptor length, for those without adaptors an unpredictable position will "
+     "adaptor squences they will be wrongly trimmed. If you set this value to, e.g. half "
+     "of adaptor length, for those without adaptors an unpredictable position will "
      "be reported. In other words, this way will cause false positive. So, by "
-     "default this value is set to 20% percent of the of 5' adaptor length. In "
+     "default this value is set to 15% percent of the of 5' adaptor length. In "
      "circumstances where you want to do exact match, set this value to 0. [int]")
     ("three-mismatch,r", po::value<int>(), 
      "Generally same as -l option but for 3' adaptor sequence. "
-     "By default this value is set to 20% percent of 3' adaptor "
+     "By default this value is set to 15% percent of 3' adaptor "
      "sequence if you specified a 3' adaptor. [int]")
     ("percent,p", po::value<float>()->default_value(0.15, "0.15"), 
      "Percent of adaptor length used for maximum tolerable five-mismatch and "
@@ -974,6 +1076,8 @@ int main (int argc, char * argv[])
      "as -H option. [int]")
     ("length-cutoff", po::value<int>()->default_value(0, "0"), 
      "suppress trimmed sequence length less than this value from output. [int]")
+    ("minimum,m", po::value<int>()->default_value(3, "3"),
+     "minimum number of base matches for trimming leading and tailing partial adaptors. default: 3 [int]")
     ;
   po::positional_options_description p;
 //  p.add("five", -1);
@@ -1010,6 +1114,8 @@ int main (int argc, char * argv[])
     }
   }
   format = get_format_app(vm);
+  if (vm.count("minimum"))
+    minimum_match = vm["minimum"].as<int>();
   report_paramter_setting(vm);
 /* 
  * start perform local alignment

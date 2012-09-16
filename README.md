@@ -102,6 +102,15 @@ by piping. Most importantly, adaptor_trimmer is fast and competes most avaible t
         
         cat data/adaptor_test_data.fastq | ./Adaptor_trimmer -H 12 -t 4 -o with_5_adaptor 
 
+** Test trimming partial adatpor. **
+
+  *Partial adaptor occurs very often in practical data, if the edit distance of the partial adaptor in the read 
+  and adaptor is larger than allowed, program will fail to find this sort of partial adatpor under the dynamic 
+  programming mode. So for those reads failed dynamic trimming, they will be trimmed under the partial adaptor mode.
+  By default, program will trim any leading or tailing bases with a minimum size of 3. Below is an example usage.
+
+    ./Adaptor_trimmer -I -5 TGGAGGGCAAGTCTGGTG -3 attcgtaccgactaagtcgc data/Partial_Adaptors.fastq -n no_adatpor
+
 **Companion tools**
 -----------------
 

@@ -99,4 +99,4 @@ int readline(FILE * IN, char * buf, int bufsize)
 
 /* transform function is also each more versatile than for_each function */
 
-#endif __TOOL_H__
+#endif
