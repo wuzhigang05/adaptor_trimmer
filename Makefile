@@ -35,14 +35,14 @@ ALL_FILES_SEQAN = $(shell $(FIND) SeqAn1.3 -name "*.h")
 ALL_FILES_BOOST = $(shell $(FIND) Boost1.50 -name "*.hpp")
 ALL_FILES = $(ALL_FILES_SEQAN) $(ALL_FILES_BOOST)
 VERSION = $(shell cat VERSION)
-$(PROG): $(SRC_DIR)/$(PROG).cc $(SRC_DIR)/Fasta_reader.h $(SRC_DIR)/seq.h $(ALL_FILES) 
+$(PROG): $(SRC_DIR)/$(PROG).cc $(SRC_DIR)/readRecord.h $(SRC_DIR)/seq.h $(ALL_FILES) 
 	@echo compiling: $@
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LINKS) 
 	@echo compiling: $@ done
 	rm -rf bin
 	mkdir bin
 	mv $@ bin
-debug: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/Fasta_reader.h $(SRC_DIR)/seq.h $(ALL_FILES) 
+debug: $(SRC_DIR)/Adaptor_trimmer.cc $(SRC_DIR)/readRecord.h $(SRC_DIR)/seq.h $(ALL_FILES) 
 	$(CXX) $(DEBUG_CXXFLAGS)  -o Adaptor_trimmer $(SRC_DIR)/Adaptor_trimmer.cc $(LINKS) 
 Guess_fastq_format: $(SRC_DIR)/Guess_fastq_format.cc $(SRC_DIR)/tools.h $(ALL_FILES)
 	@echo compiling: $@
