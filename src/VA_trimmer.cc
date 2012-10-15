@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  Adaptor_trimmer.cc
+ *       Filename:  VA_trimmer.cc
  *
  *    Description:  This programs aims to provide a flexiable tool for doing a very basic
  *                  task in NGS sequence analysis, which is removing the adaptor sequences.
