@@ -984,23 +984,22 @@ int main (int argc, char * argv[])
                                                             "STDIN"), 
      "Input file, has to be in fastq or fasta format. [str]")
     ("five-mismatch,l", po::value<int>(), 
-     "Allowed number of mismatches or gaps between the read sequence "
-     "and the 5' adaptor sequence. By setting this value to 1, we are "
-     "allowing two mismatches between adaptor and read sequence or 1 deletion "
-     "in the read sequence or 2 insertions in the read sequence. So, if you set "
-     "this value to 2, you multiply by 2 to get a sense of how many of mismatches &"
-     "indels allowed in the alignment. Since the program gurantees only report the "
-     "the best alignment, so setting this value the larger the better. Doing so is "
-     "fine for those sequence with adaptor sequences. However, for those reads without "
-     "adaptor squences they will be wrongly trimmed. If you set this value to, e.g. half "
+     "Allowed edit distance between the read sequence and the 5' adaptor sequence. "
+     "By setting this value to 1, we are allowing 2 mismatches between adaptor "
+     "and read sequence or 1 deletion in the read sequence or 2 insertions in the "
+     "read sequence. So, if you set this value to 2, you multiply by 2 to get a "
+     "sense of how many of mismatches & indels allowed in the alignment. Since the "
+     "program gurantees only report the best alignment, so theoritically, setting "
+     "this value the larger the better. Doing so is fine for those sequence with "
+     "adaptor sequences. However, it will cause for those reads without "
+     "adaptor squences being wrongly trimmed. If you set this value to, e.g. half "
      "of adaptor length, for those without adaptors an unpredictable position will "
      "be reported. In other words, this way will cause false positive. So, by "
-     "default this value is set to 15% percent of the of 5' adaptor length. In "
+     "default this value is set to 15% of the of 5' adaptor length. In "
      "circumstances where you want to do exact match, set this value to 0. [int]")
     ("three-mismatch,r", po::value<int>(), 
      "Generally same as -l option but for 3' adaptor sequence. "
-     "By default this value is set to 15% percent of 3' adaptor "
-     "sequence if you specified a 3' adaptor. [int]")
+     "By default this value is set to 15% of 3' adaptor [int]")
     ("percent,p", po::value<float>()->default_value(0.15, "0.15"), 
      "Percent of adaptor length used for maximum tolerable five-mismatch and "
      "three-mismatch. For example, if we set this number to 0.15, and the length of 5' "
@@ -1028,7 +1027,7 @@ int main (int argc, char * argv[])
     ("tail,t", po::value<int>(), "Cut the tailing n base from the input seq. Others are same"
      "as -H option. [int]")
     ("length-cutoff", po::value<int>()->default_value(0, "0"), 
-     "suppress trimmed sequence length less than this value from output. [int]")
+     "suppress trimmed sequence wth length less than this value from reporting. [int]")
     ("minimum,m", po::value<int>()->default_value(3, "3"),
      "minimum number of base matches for trimming leading and tailing partial adaptors. default: 3 [int]")
     ;
